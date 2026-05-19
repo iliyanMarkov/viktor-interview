@@ -168,10 +168,10 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
               </span>
             </div>
             <div style={{ display:"flex", gap:14, marginTop:6, fontSize:12, color:"rgba(255,255,255,0.85)", flexWrap:"wrap" }}>
-              <span><IconId size={13} style={{ verticalAlign:-2, marginRight:4 }} />{seafarer.id}</span>
-              <span><IconAnchor size={13} style={{ verticalAlign:-2, marginRight:4 }} />{seafarer.rank}</span>
-              <span><IconFlag size={13} style={{ verticalAlign:-2, marginRight:4 }} />{seafarer.nationality}</span>
-              {seafarer.currentVessel && <span><IconShip size={13} style={{ verticalAlign:-2, marginRight:4 }} />{seafarer.currentVessel}</span>}
+              <span style={{ display:"flex", alignItems:"center", gap:4 }}><IconId size={13} style={{ verticalAlign:-2, marginRight:4 }} />{seafarer.id}</span>
+              <span style={{ display:"flex", alignItems:"center", gap:4 }}><IconAnchor size={13} style={{ verticalAlign:-2, marginRight:4 }} />{seafarer.rank}</span>
+              <span style={{ display:"flex", alignItems:"center", gap:4 }}><IconFlag size={13} style={{ verticalAlign:-2, marginRight:4 }} />{seafarer.nationality}</span>
+              {seafarer.currentVessel && <span style={{ display:"flex", alignItems:"center", gap:4 }}><IconShip size={13} style={{ verticalAlign:-2, marginRight:4 }} />{seafarer.currentVessel}</span>}
             </div>
           </div>
         </div>
@@ -268,7 +268,7 @@ function PersonalTab({ seafarer, reminderOn, setReminderOn }: { seafarer: Seafar
   const initials = getInitials(seafarer);
   return (
     <>
-      <div style={{ display:"grid", gridTemplateColumns:"200px 1fr", gap:24, marginBottom:20 }}>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:24, marginBottom:20 }}>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center" }}>
           <div style={{ width:120, height:120, borderRadius:12, background:"linear-gradient(135deg,#144272 0%,#2e7cc4 100%)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:38, fontWeight:500, color:"#fff", marginBottom:12, boxShadow:"0 2px 8px rgba(15,52,96,0.12)" }}>
             {initials}
@@ -278,7 +278,7 @@ function PersonalTab({ seafarer, reminderOn, setReminderOn }: { seafarer: Seafar
           <StyledBtn icon={<IconEdit size={14}/>} label="Edit information" />
           <div style={{ marginTop:6, width:"100%" }}><StyledBtn icon={<IconFileImport size={14}/>} label="Update from app" /></div>
         </div>
-        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:14, flex:1 }}>
           <InfoCard>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
               <p style={{ margin:0, fontSize:12, color:"#144272", textTransform:"uppercase", letterSpacing:"0.04em", fontWeight:500 }}>
