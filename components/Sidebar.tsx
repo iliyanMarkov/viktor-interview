@@ -71,10 +71,10 @@ export default function Sidebar() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "#0a2540",
+            background: "transparent",
             border: "none",
             borderRadius: 8,
-            color: "#ffffff",
+            color: "rgb(10, 37, 64)",
             cursor: "pointer",
           }}
         >
