@@ -6,31 +6,35 @@ import {
   IconChevronRight,
   IconChevronDown,
   IconLayoutDashboard,
+  IconUsers,
+  IconShip,
 } from "@tabler/icons-react";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { ComponentType, Suspense, useEffect, useRef, useState } from "react";
 import { getSeafarer } from "@/lib/seafarers";
 
 interface Crumb {
   label: string;
   href?: string;
+  icon?: ComponentType<{ size?: number }>;
 }
 
 function buildCrumbs(pathname: string, ids: string | null): Crumb[] {
-  const crumbs: Crumb[] = [{ label: "Dashboard", href: "/" }];
-
   if (pathname.startsWith("/seafarers")) {
-    crumbs.push({ label: "Seafarers", href: "/seafarers" });
+    const crumbs: Crumb[] = [{ label: "Seafarers", href: "/seafarers", icon: IconUsers }];
     if (ids) {
       const seafarer = getSeafarer(ids);
       crumbs.push({
         label: seafarer ? `${seafarer.firstName} ${seafarer.lastName}` : ids,
       });
     }
-  } else if (pathname.startsWith("/ships")) {
-    crumbs.push({ label: "Ships" });
+    return crumbs;
   }
 
-  return crumbs;
+  if (pathname.startsWith("/ships")) {
+    return [{ label: "Ships", icon: IconShip }];
+  }
+
+  return [{ label: "Dashboard", href: "/", icon: IconLayoutDashboard }];
 }
 
 function BreadcrumbsInner() {
@@ -108,7 +112,6 @@ function BreadcrumbsInner() {
           >
             {crumbs.map((crumb, i) => {
               const isLast = i === crumbs.length - 1;
-              const isFirst = i === 0;
               return (
                 <li key={i} role="option" aria-selected={isLast}>
                   {crumb.href && !isLast ? (
@@ -132,7 +135,7 @@ function BreadcrumbsInner() {
                         (e.currentTarget as HTMLElement).style.background = "transparent";
                       }}
                     >
-                      {isFirst && <IconLayoutDashboard size={13} />}
+                      {crumb.icon && <crumb.icon size={13} />}
                       {crumb.label}
                     </Link>
                   ) : (
@@ -147,7 +150,7 @@ function BreadcrumbsInner() {
                         padding: "6px 12px",
                       }}
                     >
-                      {isFirst && <IconLayoutDashboard size={13} />}
+                      {crumb.icon && <crumb.icon size={13} />}
                       {crumb.label}
                     </span>
                   )}
@@ -162,7 +165,6 @@ function BreadcrumbsInner() {
       <div className="hidden md:flex" style={{ alignItems: "center", gap: 4 }}>
         {crumbs.map((crumb, i) => {
           const isLast = i === crumbs.length - 1;
-          const isFirst = i === 0;
 
           return (
             <span key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -199,7 +201,7 @@ function BreadcrumbsInner() {
                     el.style.color = "#475569";
                   }}
                 >
-                  {isFirst && <IconLayoutDashboard size={13} />}
+                  {crumb.icon && <crumb.icon size={13} />}
                   {crumb.label}
                 </Link>
               ) : (
@@ -214,7 +216,7 @@ function BreadcrumbsInner() {
                     padding: "2px 6px",
                   }}
                 >
-                  {isFirst && <IconLayoutDashboard size={13} />}
+                  {crumb.icon && <crumb.icon size={13} />}
                   {crumb.label}
                 </span>
               )}
