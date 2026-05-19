@@ -250,9 +250,10 @@ export default function ShipMonitor() {
 
   const [selectedShip, setSelectedShip] = useState<Ship | null>(null);
   const [hoveredShip, setHoveredShip] = useState<string | null>(null);
-  const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
+    setTime(new Date());
     const interval = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
@@ -286,17 +287,11 @@ export default function ShipMonitor() {
     canvas.height = 1024;
     const ctx = canvas.getContext('2d')!;
 
-    ctx.fillStyle = '#0a1929';
-    ctx.fillRect(0, 0, 2048, 1024);
-
-    const oceanGrad = ctx.createRadialGradient(1024, 512, 0, 1024, 512, 1024);
-    oceanGrad.addColorStop(0, 'rgba(20, 45, 80, 0.5)');
-    oceanGrad.addColorStop(1, 'rgba(5, 13, 28, 0.4)');
-    ctx.fillStyle = oceanGrad;
+    ctx.fillStyle = 'rgb(96,197,238)';
     ctx.fillRect(0, 0, 2048, 1024);
 
     /* Grid lines */
-    ctx.strokeStyle = 'rgba(46, 124, 196, 0.08)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
     ctx.lineWidth = 1;
     for (let lon = -180; lon <= 180; lon += 15) {
       const x = ((lon + 180) / 360) * 2048;
@@ -306,7 +301,7 @@ export default function ShipMonitor() {
       const y = ((90 - lat) / 180) * 1024;
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(2048, y); ctx.stroke();
     }
-    ctx.strokeStyle = 'rgba(46, 124, 196, 0.2)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
     ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.moveTo(0, 512); ctx.lineTo(2048, 512); ctx.stroke();
 
@@ -315,7 +310,7 @@ export default function ShipMonitor() {
       ((90 - lat) / 180) * 1024,
     ];
 
-    /* Landmasses — project blue palette */
+    /* Landmasses — light grey/white on light blue ocean */
     LANDMASSES.forEach(polygon => {
       ctx.beginPath();
       polygon.forEach(([lon, lat], i) => {
@@ -323,30 +318,11 @@ export default function ShipMonitor() {
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       });
       ctx.closePath();
-      ctx.fillStyle = '#143d6e';
+      ctx.fillStyle = 'rgb(159,200,106)';
       ctx.fill();
-      ctx.strokeStyle = '#2e7cc4';
+      ctx.strokeStyle = 'rgb(159,200,106)';
       ctx.lineWidth = 2;
       ctx.stroke();
-      ctx.strokeStyle = 'rgba(46, 124, 196, 0.35)';
-      ctx.lineWidth = 4;
-      ctx.stroke();
-    });
-
-    LANDMASSES.forEach(polygon => {
-      ctx.save();
-      ctx.beginPath();
-      polygon.forEach(([lon, lat], i) => {
-        const [x, y] = project(lon, lat);
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      });
-      ctx.closePath();
-      ctx.clip();
-      for (let i = 0; i < 600; i++) {
-        ctx.fillStyle = `rgba(46, 124, 196, ${0.04 + Math.random() * 0.08})`;
-        ctx.fillRect(Math.random() * 2048, Math.random() * 1024, 1.5, 1.5);
-      }
-      ctx.restore();
     });
 
     const earthTexture = new THREE.CanvasTexture(canvas);
@@ -355,50 +331,24 @@ export default function ShipMonitor() {
 
     const globeMat = new THREE.MeshPhongMaterial({
       map: earthTexture,
-      emissive: 0x081526,
-      emissiveIntensity: 0.35,
+      emissive: 0x000000,
+      emissiveIntensity: 0,
       shininess: 10,
-      specular: 0x1a3a6a,
+      specular: '#fff',
     });
 
     const globe = new THREE.Mesh(globeGeo, globeMat);
     globeRef.current = globe;
     scene.add(globe);
 
-    /* Atmospheric glow — project blue */
-    const glowGeo = new THREE.SphereGeometry(globeRadius * 1.08, 64, 64);
-    const glowMat = new THREE.ShaderMaterial({
-      transparent: true,
-      side: THREE.BackSide,
-      uniforms: { glowColor: { value: new THREE.Color(0x2e7cc4) } },
-      vertexShader: `
-        varying vec3 vNormal;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 glowColor;
-        varying vec3 vNormal;
-        void main() {
-          float intensity = pow(0.7 - dot(vNormal, vec3(0, 0, 1.0)), 2.0);
-          gl_FragColor = vec4(glowColor, 1.0) * intensity * 0.55;
-        }
-      `,
-    });
-    scene.add(new THREE.Mesh(glowGeo, glowMat));
 
     const wireGeo = new THREE.SphereGeometry(globeRadius * 1.002, 32, 16);
-    globe.add(new THREE.Mesh(wireGeo, new THREE.MeshBasicMaterial({ color: 0x2e7cc4, wireframe: true, transparent: true, opacity: 0.05 })));
+    globe.add(new THREE.Mesh(wireGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.08 })));
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-    const dirLight = new THREE.DirectionalLight(0xfef3c7, 0.8);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
     dirLight.position.set(5, 3, 5);
     scene.add(dirLight);
-    const rimLight = new THREE.DirectionalLight(0x2e7cc4, 0.35);
-    rimLight.position.set(-5, 0, -3);
-    scene.add(rimLight);
 
     /* Markers */
     const markerGroup = new THREE.Group();
@@ -437,20 +387,6 @@ export default function ShipMonitor() {
       markerGroup.add(beam);
     });
 
-    /* Stars */
-    const starsGeo = new THREE.BufferGeometry();
-    const starPositions = new Float32Array(800 * 3);
-    for (let i = 0; i < 800; i++) {
-      const r = 30 + Math.random() * 20;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      starPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      starPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      starPositions[i * 3 + 2] = r * Math.cos(phi);
-    }
-    starsGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const stars = new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, transparent: true, opacity: 0.5 }));
-    scene.add(stars);
 
     /* Pointer handlers */
     const handlePointerDown = (e: PointerEvent) => {
@@ -535,7 +471,6 @@ export default function ShipMonitor() {
             m.userData.baseOpacity * (1 - pulse * 0.5);
         }
       });
-      stars.rotation.y += 0.0001;
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);
     };
@@ -576,7 +511,7 @@ export default function ShipMonitor() {
   }), []);
 
   const hoveredShipData = hoveredShip ? SHIPS.find(s => s.id === hoveredShip) : null;
-  const utcTime = time.toISOString().split('T')[1].split('.')[0] + ' UTC';
+  const utcTime = time ? time.toISOString().split('T')[1].split('.')[0] + ' UTC' : null;
 
   /* ── Render ─────────────────────────────────────────── */
   return (
@@ -605,7 +540,7 @@ export default function ShipMonitor() {
 
               {/* UTC + live badge */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 12, fontFamily: 'monospace', color: '#0a2540', fontWeight: 600 }}>{utcTime}</span>
+                <span style={{ fontSize: 12, fontFamily: 'monospace', color: '#0a2540', fontWeight: 600 }}>{utcTime ?? '––:––:–– UTC'}</span>
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
                   fontSize: 11, fontWeight: 500,
@@ -688,7 +623,7 @@ export default function ShipMonitor() {
           </aside>
 
           {/* CENTRE — Globe */}
-          <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent' }}>
+          <div style={{ position: 'relative', overflow: 'hidden', background: '#f1f5f9' }}>
             <div ref={mountRef} style={{ width: '100%', height: '100%', touchAction: 'none' }} />
 
             {/* Corner labels */}
@@ -704,7 +639,7 @@ export default function ShipMonitor() {
                 textAlign: i % 2 === 1 ? 'right' : 'left',
               }}>
                 {lines.map(l => (
-                  <div key={l} style={{ fontSize: 10, letterSpacing: '0.08em', color: 'rgba(148,163,184,0.7)', lineHeight: 1.6 }}>{l}</div>
+                  <div key={l} style={{ fontSize: 10, letterSpacing: '0.08em', color: 'rgba(71,85,105,0.6)', lineHeight: 1.6 }}>{l}</div>
                 ))}
               </div>
             ))}
