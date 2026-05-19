@@ -115,7 +115,7 @@ function Bar({ pct, color = "#3b82f6" }: { pct: number; color?: string }) {
 /* ── Card shell ─────────────────────────────────────────── */
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{ background: "#fff", border: "1px solid rgba(15,52,96,0.08)", borderRadius: 12, boxShadow: "0 1px 2px rgba(15,52,96,0.04)", ...style }}>
+    <div style={{ height: "fit-content", background: "#fff", border: "1px solid rgba(15,52,96,0.08)", borderRadius: 12, boxShadow: "0 1px 2px rgba(15,52,96,0.04)", ...style }}>
       {children}
     </div>
   );
