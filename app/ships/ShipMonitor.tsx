@@ -580,10 +580,10 @@ export default function ShipMonitor() {
 
         {/* ── Backdrops (mobile only) ── */}
         {isMobile && leftOpen && (
-          <div onClick={() => setLeftOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 19 }} />
+          <div onClick={() => setLeftOpen(false)} style={{ position: 'fixed', top: 56, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.45)', zIndex: 39 }} />
         )}
         {isMobile && rightOpen && (
-          <div onClick={() => setRightOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 19 }} />
+          <div onClick={() => setRightOpen(false)} style={{ position: 'fixed', top: 56, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.45)', zIndex: 39 }} />
         )}
 
         {/* ── Toggle buttons ── */}
@@ -634,7 +634,7 @@ export default function ShipMonitor() {
         {/* ── LEFT panel — Fleet Overview ── */}
         <aside style={{
           position: isMobile ? 'fixed' : 'absolute',
-          top: 0, left: 0, bottom: 0,
+          top: isMobile ? 56 : 0, left: 0, bottom: 0,
           width: isMobile ? '100vw' : 264,
           transform: leftOpen ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 0.25s ease',
@@ -642,9 +642,10 @@ export default function ShipMonitor() {
           borderRight: isMobile ? 'none' : '1px solid rgba(15,52,96,0.10)',
           boxShadow: '4px 0 20px rgba(15,52,96,0.08)',
           display: 'flex', flexDirection: 'column',
-          zIndex: 20,
+          zIndex: isMobile ? 40 : 20,
         }}>
           <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(15,52,96,0.06)', flexShrink: 0 }}>
+           
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#0a2540' }}>Fleet Overview</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -657,14 +658,16 @@ export default function ShipMonitor() {
                   <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'sm-live 2s infinite' }} />
                   Live
                 </span>
+                {isMobile && <button onClick={() => setLeftOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 10, display: 'flex', marginLeft: 'auto' }}>
+                    <IconX size={18} />
+                </button>}
               </div>
             </div>
+            
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {isMobile && <button onClick={() => setLeftOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 10, display: 'flex', marginLeft: 'auto' }}>
-                <IconX size={18} />
-            </button>}
+            
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <StatCard value={stats.total}    label="Vessels"  />
               <StatCard value={stats.underway}  label="Underway" color="#16a34a" />
@@ -717,7 +720,7 @@ export default function ShipMonitor() {
         {/* ── RIGHT panel — Active Vessels ── */}
         <aside style={{
           position: isMobile ? 'fixed' : 'absolute',
-          top: 0, right: 0, bottom: 0,
+          top: isMobile ? 56 : 0, right: 0, bottom: 0,
           width: isMobile ? '100vw' : 296,
           transform: rightOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.25s ease',
@@ -725,7 +728,7 @@ export default function ShipMonitor() {
           borderLeft: isMobile ? 'none' : '1px solid rgba(15,52,96,0.10)',
           boxShadow: '-4px 0 20px rgba(15,52,96,0.08)',
           display: 'flex', flexDirection: 'column',
-          zIndex: 20,
+          zIndex: isMobile ? 40 : 20,
         }}>
           <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(15,52,96,0.06)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -736,12 +739,13 @@ export default function ShipMonitor() {
                 background: '#eff6ff', color: '#1d4ed8',
                 padding: '1px 7px', borderRadius: 20,
               }}>{SHIPS.length}</span>
+              {isMobile && <button onClick={() => setRightOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 4, display: 'flex',  }}>
+                <IconX size={18} />
+            </button>}
             </div>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>
-          {isMobile && <button onClick={() => setRightOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 10, display: 'flex', marginLeft: 'auto', }}>
-                <IconX size={18} />
-            </button>}
+          
             {SHIPS.map(ship => {
               const isHovered = hoveredShip === ship.id;
               return (
