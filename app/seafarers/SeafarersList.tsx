@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, useCallback } from "react";
-import { IconUsers, IconSearch, IconChevronRight } from "@tabler/icons-react";
+import { IconUsers, IconSearch } from "@tabler/icons-react";
 import { SEAFARERS, type Seafarer, type SeafarerStatus } from "@/lib/seafarers";
 
 const STATUS_STYLES: Record<SeafarerStatus, { bg: string; text: string }> = {
@@ -27,7 +27,6 @@ const COLUMNS = [
   { key: "status",    label: "Status",         defaultWidth: 110 },
   { key: "vessel",    label: "Vessel",         defaultWidth: 160 },
   { key: "available", label: "Available from", defaultWidth: 130 },
-  { key: "arrow",     label: "",               defaultWidth: 44  },
 ];
 
 function getInitials(s: Seafarer) {
@@ -76,11 +75,11 @@ export default function SeafarersList() {
   }
 
   return (
-    <div className="p-6">
-      <div className="max-w-6xl mx-auto">
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 24, boxSizing: "border-box" }}>
+      <div style={{ maxWidth: 1200, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-5 flex-shrink-0">
           <div className="flex items-center gap-3">
             <IconUsers size={24} className="text-[#144272]" />
             <div>
@@ -94,10 +93,10 @@ export default function SeafarersList() {
           </div>
         </div>
 
-        {/* Scrollable table wrapper */}
+        {/* Scrollable table wrapper — fills remaining height */}
         <div
           className="bg-white rounded-2xl border border-[rgba(15,52,96,0.1)] shadow-sm"
-          style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}
+          style={{ flex: 1, minHeight: 0, overflow: "auto", WebkitOverflowScrolling: "touch" as const }}
         >
           <table
             style={{
@@ -229,10 +228,6 @@ export default function SeafarersList() {
                       {s.availableFrom}
                     </td>
 
-                    {/* Arrow */}
-                    <td style={{ padding: "10px 16px", textAlign: "center" }}>
-                      <IconChevronRight size={16} className="text-[#94a3b8]" />
-                    </td>
                   </tr>
                 );
               })}

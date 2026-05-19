@@ -43,7 +43,7 @@ export default function RootLayout({
           }}
         >
           <Header />
-          <main style={{ flex: 1, overflowY: "auto" }}>{children}</main>
+          <main style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>{children}</main>
         </div>
       </body>
     </html>

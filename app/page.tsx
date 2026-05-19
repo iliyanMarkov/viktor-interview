@@ -7,7 +7,7 @@ const available = SEAFARERS.filter((s) => s.status === "Available").length;
 
 export default function Home() {
   return (
-    <div className="p-6">
+    <div className="p-6" style={{ overflowY: "auto", flex: 1 }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         {/* Welcome */}
         <div style={{ marginBottom: 28 }}>

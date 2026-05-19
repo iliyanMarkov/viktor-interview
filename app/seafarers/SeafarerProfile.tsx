@@ -146,7 +146,7 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
   const initials = getInitials(seafarer);
 
   return (
-    <div className="p-6">
+    <div className="p-6" style={{ flex: 1, overflowY: "auto" }}>
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>
 
         {/* Header strip */}
