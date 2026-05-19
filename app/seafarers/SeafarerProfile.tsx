@@ -191,7 +191,6 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
 
         {/* Career timeline */}
         <div style={{ background:"#fff", border:"0.5px solid rgba(15,52,96,0.1)", borderRadius:12, boxShadow:"0 1px 2px rgba(15,52,96,0.04)", marginBottom:14, overflow:"hidden" }}>
-          <div style={{ height:3, background:"linear-gradient(90deg,#144272 0%,#2e7cc4 50%,#0891b2 100%)" }} />
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px 12px", flexWrap:"wrap", gap:12 }}>
             <div>
               <h2 style={{ fontSize:14, fontWeight:500, margin:0, color:"#0f172a" }}>
