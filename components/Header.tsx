@@ -1,25 +1,9 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { IconLogout, IconBell, IconSearch } from "@tabler/icons-react";
-
-const ROUTE_TITLES: Record<string, string> = {
-  "/": "Dashboard",
-  "/seafarers": "Seafarers",
-  "/ships": "Ships",
-};
-
-function getTitle(pathname: string) {
-  if (ROUTE_TITLES[pathname]) return ROUTE_TITLES[pathname];
-  if (pathname.startsWith("/seafarers")) return "Seafarers";
-  if (pathname.startsWith("/ships")) return "Ships";
-  return "Marine Operations";
-}
+import { IconLogout } from "@tabler/icons-react";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 export default function Header() {
-  const pathname = usePathname();
-  const title = getTitle(pathname);
-
   return (
     <header
       className="app-header"
@@ -35,18 +19,8 @@ export default function Header() {
         zIndex: 30,
       }}
     >
-      {/* Left: page title */}
-      <h2
-        style={{
-          fontSize: 15,
-          fontWeight: 600,
-          color: "#0a2540",
-          margin: 0,
-          letterSpacing: "-0.2px",
-        }}
-      >
-        {title}
-      </h2>
+      {/* Left: breadcrumbs */}
+      <Breadcrumbs />
 
       {/* Right: actions */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
