@@ -233,6 +233,66 @@ function StatusPill({ status }: { status: Ship['status'] }) {
   );
 }
 
+/* ── 3D ship marker ─────────────────────────────────────── */
+// Builds a tiny boat: tapered hull (extruded shape), white cabin, and a stack.
+// Local axes: +Y = bow / forward, +X = starboard, +Z = up (away from globe).
+function createShipMarker(color: THREE.Color): THREE.Group {
+  const group = new THREE.Group();
+
+  const hullShape = new THREE.Shape();
+  hullShape.moveTo(0, 0.048);
+  hullShape.lineTo(0.020, 0.022);
+  hullShape.lineTo(0.020, -0.036);
+  hullShape.lineTo(-0.020, -0.036);
+  hullShape.lineTo(-0.020, 0.022);
+  hullShape.closePath();
+
+  const hullGeo = new THREE.ExtrudeGeometry(hullShape, {
+    depth: 0.014,
+    bevelEnabled: true,
+    bevelThickness: 0.003,
+    bevelSize: 0.003,
+    bevelSegments: 1,
+  });
+  const hull = new THREE.Mesh(
+    hullGeo,
+    new THREE.MeshPhongMaterial({ color, shininess: 60, specular: 0x222222 }),
+  );
+  group.add(hull);
+
+  const cabin = new THREE.Mesh(
+    new THREE.BoxGeometry(0.026, 0.028, 0.012),
+    new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 40 }),
+  );
+  cabin.position.set(0, -0.008, 0.014 + 0.006);
+  group.add(cabin);
+
+  const stack = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.0035, 0.0035, 0.014, 8),
+    new THREE.MeshPhongMaterial({ color, shininess: 40 }),
+  );
+  stack.rotation.x = Math.PI / 2;
+  stack.position.set(0, -0.010, 0.014 + 0.012 + 0.007);
+  group.add(stack);
+
+  return group;
+}
+
+// Orient a marker so its local +Z faces outward from globe center and its local +Y
+// points along the ship's heading (0° = north, 90° = east, clockwise from above).
+function orientOnGlobe(obj: THREE.Object3D, position: THREE.Vector3, headingDeg: number) {
+  const normal = position.clone().normalize();
+  const worldUp = new THREE.Vector3(0, 1, 0);
+  const east = new THREE.Vector3().crossVectors(worldUp, normal);
+  if (east.lengthSq() < 1e-6) east.set(1, 0, 0); // pole fallback
+  east.normalize();
+  const north = new THREE.Vector3().crossVectors(normal, east).normalize();
+
+  const basis = new THREE.Matrix4().makeBasis(east, north, normal);
+  obj.quaternion.setFromRotationMatrix(basis);
+  obj.rotateZ(-headingDeg * Math.PI / 180);
+}
+
 /* ── Main component ─────────────────────────────────────── */
 export default function ShipMonitor() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -382,13 +442,14 @@ export default function ShipMonitor() {
       ring.userData = { isMarker: true, shipId: ship.id, type: 'ring', baseOpacity: 0.45, phase: idx * 0.7 };
       markerGroup.add(ring);
 
-      const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(0.025, 16, 16),
-        new THREE.MeshBasicMaterial({ color }),
-      );
-      dot.position.copy(pos);
-      dot.userData = { isMarker: true, shipId: ship.id, type: 'dot' };
-      markerGroup.add(dot);
+      const shipMesh = createShipMarker(color);
+      shipMesh.position.copy(pos);
+      orientOnGlobe(shipMesh, pos, ship.heading);
+      // Tag every sub-mesh so recursive raycasting resolves to the parent ship.
+      shipMesh.traverse(child => {
+        child.userData = { isMarker: true, shipId: ship.id, type: 'ship' };
+      });
+      markerGroup.add(shipMesh);
 
       const beam = new THREE.Mesh(
         new THREE.CylinderGeometry(0.005, 0.005, 0.25, 6),
@@ -426,7 +487,7 @@ export default function ShipMonitor() {
       mouseRef.current.x = ((clientX - rect.left) / rect.width) * 2 - 1;
       mouseRef.current.y = -((clientY - rect.top) / rect.height) * 2 + 1;
       raycasterRef.current.setFromCamera(mouseRef.current, camera);
-      const intersects = raycasterRef.current.intersectObjects(markerGroup.children, false);
+      const intersects = raycasterRef.current.intersectObjects(markerGroup.children, true);
       const hit = intersects.find(i => i.object.userData.isMarker);
       if (hit) {
         setHoveredShip(hit.object.userData.shipId as string);
@@ -448,7 +509,7 @@ export default function ShipMonitor() {
       mouseRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouseRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       raycasterRef.current.setFromCamera(mouseRef.current, camera);
-      const intersects = raycasterRef.current.intersectObjects(markerGroup.children, false);
+      const intersects = raycasterRef.current.intersectObjects(markerGroup.children, true);
       const hit = intersects.find(i => i.object.userData.isMarker);
       if (hit) {
         const ship = SHIPS.find(s => s.id === hit.object.userData.shipId);
