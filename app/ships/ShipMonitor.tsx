@@ -449,10 +449,19 @@ export default function ShipMonitor() {
     renderer.domElement.addEventListener('pointerup', handlePointerUp);
     renderer.domElement.addEventListener('click', handleClick);
 
+    // Minimum camera Z to keep the globe fully in view for a given aspect ratio.
+    // Three.js uses a vertical FOV (45°), so on portrait/narrow viewports the globe
+    // clips horizontally. Formula: minZ = globeRadius * padding / (tan(FOV/2) * aspect)
+    // which simplifies to ~5 / aspect, floored at 5 so landscape never zooms too close.
+    const getMinZ = (aspect: number) => Math.max(5, 5 / aspect);
+
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
+      const aspect = mountRef.current
+        ? mountRef.current.clientWidth / mountRef.current.clientHeight
+        : 1;
       camera.position.z += e.deltaY * 0.003;
-      camera.position.z = Math.max(3.2, Math.min(8, camera.position.z));
+      camera.position.z = Math.max(getMinZ(aspect), Math.min(10, camera.position.z));
     };
     renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
 
@@ -482,9 +491,13 @@ export default function ShipMonitor() {
       const entry = entries[0];
       if (!entry) return;
       const { width: w, height: h } = entry.contentRect;
-      camera.aspect = w / h;
+      const aspect = w / h;
+      camera.aspect = aspect;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      // Push camera back on narrow viewports so globe stays fully visible
+      const minZ = getMinZ(aspect);
+      if (camera.position.z < minZ) camera.position.z = minZ;
     };
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(mountRef.current);
