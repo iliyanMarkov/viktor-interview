@@ -60,10 +60,10 @@ const SERIES_META: Record<SeriesKey, {
   summary: string;
 }> = {
   performance: { label: "Performance",         format: (v) => `${v} / 100`,                normalize: (v) => v,                                   summary: "87 / 100"   },
-  salary:      { label: "Salary ($)",           format: (v) => `$${v.toLocaleString()} /mo`, normalize: (v) => Math.round(((v-4000)/1000)*50+40),  summary: "$4,850 /mo" },
+  salary:      { label: "Salary ($)",           format: (v) => `$${v.toLocaleString("en-US")} /mo`, normalize: (v) => Math.round(((v-4000)/1000)*50+40),  summary: "$4,850 /mo" },
   contract:    { label: "Contract (months)",    format: (v) => `${v.toFixed(1)} months`,     normalize: (v) => Math.round(((v-4)/4)*60+30),        summary: "6.2 months" },
   travelTime:  { label: "Travel time (hrs)",    format: (v) => `${v.toFixed(1)} hrs`,        normalize: (v) => Math.round(((v-8)/16)*60+20),       summary: "14.5 hrs"   },
-  travelCost:  { label: "Travel cost ($)",      format: (v) => `$${v.toLocaleString()}`,     normalize: (v) => Math.round(((v-800)/1200)*60+20),   summary: "$1,420"     },
+  travelCost:  { label: "Travel cost ($)",      format: (v) => `$${v.toLocaleString("en-US")}`,     normalize: (v) => Math.round(((v-800)/1200)*60+20),   summary: "$1,420"     },
   home:        { label: "Home duration (days)", format: (v) => `${v} days`,                  normalize: (v) => Math.round(((v-30)/90)*60+30),      summary: "94 days"    },
   risk:        { label: "Risk factor",          format: (v) => `${v}% (${v<15?"Low":v<25?"Moderate":"High"})`, normalize: (v) => v,               summary: "Low (12%)"  },
 };
@@ -329,7 +329,7 @@ function PersonalTab({ seafarer, reminderOn, setReminderOn }: { seafarer: Seafar
           <Field label="Phone" value={seafarer.phone} />
           <Field label="Email" value={seafarer.email} />
           <Field label="International airport" value={seafarer.airport} />
-          <Field label="Salary" value={`$${seafarer.salary.toLocaleString()} /mo`} />
+          <Field label="Salary" value={`$${seafarer.salary.toLocaleString("en-US")} /mo`} />
           <div style={{ gridColumn:"1 / -1" }}><Field label="Address" value={seafarer.address} /></div>
         </div>
       </InfoCard>
