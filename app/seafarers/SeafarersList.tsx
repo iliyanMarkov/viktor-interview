@@ -310,18 +310,22 @@ export default function SeafarersList() {
                       key={col.key}
                       onClick={() => handleSort(col.key)}
                       style={{
-                        position: "relative",
+                        position: "sticky",
+                        top: 0,
+                        zIndex: 2,
                         width: colWidths[col.key],
                         padding: i === 0 ? "10px 16px 10px 20px" : "10px 16px",
                         textAlign: "left",
                         fontSize: 11,
                         fontWeight: 500,
                         color: isSorted ? "#144272" : "#475569",
+                        background: "#f8fafc",
                         textTransform: "uppercase",
                         letterSpacing: "0.06em",
                         userSelect: "none",
                         whiteSpace: "nowrap",
                         cursor: "pointer",
+                        boxShadow: "0 1px 0 rgba(15,52,96,0.08)",
                       }}
                     >
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
