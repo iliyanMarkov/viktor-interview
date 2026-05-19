@@ -138,13 +138,15 @@ function SectionTitle({ icon: Icon, color, title, sub }: { icon: React.ElementTy
    Page
 ══════════════════════════════════════════════════════════ */
 export default function Dashboard() {
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState<Date | null>(null);
   const [clocks, setClocks] = useState(DEFAULT_CLOCKS);
-  const [lastUpdated] = useState(() => new Date().toLocaleString("en-US"));
+  const [lastUpdated, setLastUpdated] = useState<string>("");
   const [seafarersOpen, setSeafarersOpen] = useState(false);
 
-  /* Tick every second */
+  /* Only start the clock on the client to avoid SSR/hydration mismatch */
   useEffect(() => {
+    setNow(new Date());
+    setLastUpdated(new Date().toLocaleString("en-US"));
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
@@ -180,16 +182,16 @@ export default function Dashboard() {
                     </button>
                   </div>
                   <div style={{ fontFamily: "monospace", fontSize: 14, fontWeight: 700, color: "#0a2540", letterSpacing: "0.04em" }}>
-                    {fmtTime(c.tz, now)}
+                    {now ? fmtTime(c.tz, now) : "––:––:–– ––"}
                   </div>
                   <div style={{ fontSize: 11, color: "#475569", marginTop: 1 }}>
-                    {fmtDate(c.tz, now)}
+                    {now ? fmtDate(c.tz, now) : "–––"}
                   </div>
                 </div>
               </div>
             ))}
             <button
-              style={{ width: 160,  background: "#fff", border: "1px dashed rgba(15,52,96,0.2)", borderRadius: 10, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, color: "#475569", fontSize: 12 }}
+              style={{ width: 160, minHeight: 83, background: "#fff", border: "1px dashed rgba(15,52,96,0.2)", borderRadius: 10, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, color: "#475569", fontSize: 12 }}
               onClick={() => alert("Add world clock — coming soon")}
             >
               <IconPlus size={16} />
@@ -270,10 +272,10 @@ export default function Dashboard() {
         </div>
 
         {/* ── Row 3: Document Status + Manning Agents ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 16, marginBottom: 16 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 16 }}>
 
           {/* Document Status */}
-          <Card>
+          <Card style={{ flex: 1 }}>
             <SectionTitle icon={IconFileText} color="#dc2626" title="Document Status" sub="Certificate validity overview" />
             <div style={{ padding: "0 20px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
               {DOC_STATUS.map((d) => (
@@ -289,7 +291,7 @@ export default function Dashboard() {
           </Card>
 
           {/* Manning Agents */}
-          <Card>
+          <Card style={{ flex: 1 }}>
             <SectionTitle icon={IconBriefcase} color="#7c3aed" title="Manning Agents" sub="Distribution by manning agent" />
             <div style={{ padding: "0 20px 20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 24px" }}>
               {MANNING.map((m) => (
@@ -306,10 +308,10 @@ export default function Dashboard() {
         </div>
 
         {/* ── Row 4: Nationalities + Ranks ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 16 }}>
 
           {/* Nationalities */}
-          <Card>
+          <Card style={{ flex: 1 }}>
             <SectionTitle icon={IconWorld} color="#2563eb" title="Nationalities" sub="Crew nationality distribution" />
             <div style={{ padding: "0 20px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
               {NATS.map((n) => (
@@ -325,7 +327,7 @@ export default function Dashboard() {
           </Card>
 
           {/* Ranks */}
-          <Card>
+          <Card style={{ flex: 1 }}>
             <SectionTitle icon={IconBriefcase} color="#ca8a04" title="Ranks Distribution" sub="Crew by rank" />
             <div style={{ padding: "0 20px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
               {RANKS.map((r) => (
