@@ -119,6 +119,7 @@ export default function Sidebar() {
         <Link
           href="/"
           style={{
+            height: 56,
             display: "flex",
             alignItems: "center",
             gap: expanded ? 10 : 0,
