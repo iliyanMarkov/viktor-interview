@@ -248,7 +248,7 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
               const isActive = activeTab === tab;
               const isEmergency = tab === "Emergencies";
               return (
-                <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding:"12px 4px", fontSize:13, color: isActive ? "#144272" : isEmergency ? "#92400e" : "#475569", cursor:"pointer", whiteSpace:"nowrap", background:"none", border:"none", borderBottom: isActive ? "2px solid #1e5a96" : "2px solid transparent", fontFamily:"inherit", fontWeight: isActive ? 500 : 400, transition:"color 0.15s,border-color 0.15s" }}>
+                <button key={tab} onClick={() => setActiveTab(tab)} style={{ display: "flex", alignItems: "center", padding:"12px 4px", fontSize:13, color: isActive ? "#144272" : isEmergency ? "#92400e" : "#475569", cursor:"pointer", whiteSpace:"nowrap", background:"none", border:"none", borderBottom: isActive ? "2px solid #1e5a96" : "2px solid transparent", fontFamily:"inherit", fontWeight: isActive ? 500 : 400, transition:"color 0.15s,border-color 0.15s" }}>
                   {isEmergency && <IconAlertTriangle size={13} style={{ verticalAlign:-2, marginRight:4, color:"#92400e" }} />}
                   {tab}
                 </button>
