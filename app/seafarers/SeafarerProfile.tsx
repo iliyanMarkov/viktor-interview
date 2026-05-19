@@ -10,6 +10,7 @@ import {
   LineElement,
   Filler,
   Tooltip,
+  type TooltipItem,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import {
@@ -128,9 +129,10 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
         borderColor: "rgba(255,255,255,0.1)", borderWidth: 1,
         padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4,
         callbacks: {
-          label: (ctx: { dataset: { rawData: number[]; formatter: (v: number) => string; label: string }; dataIndex: number }) => {
-            const raw = ctx.dataset.rawData[ctx.dataIndex];
-            return `  ${ctx.dataset.label}: ${ctx.dataset.formatter(raw)}`;
+          label: (ctx: TooltipItem<"line">) => {
+            const ds = ctx.dataset as unknown as { rawData: number[]; formatter: (v: number) => string; label: string };
+            const raw = ds.rawData[ctx.dataIndex];
+            return `  ${ds.label}: ${ds.formatter(raw)}`;
           },
         },
       },
