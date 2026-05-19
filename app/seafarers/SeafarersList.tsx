@@ -79,7 +79,7 @@ export default function SeafarersList() {
       <div style={{ maxWidth: 1200, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-5 flex-shrink-0">
+        <div className="flex items-center justify-between mb-5 flex-shrink-0 flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <IconUsers size={24} className="text-[#144272]" />
             <div>
