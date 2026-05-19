@@ -22,6 +22,7 @@ export default function Header() {
 
   return (
     <header
+      className="app-header"
       style={{
         height: 56,
         background: "#ffffff",
@@ -49,74 +50,6 @@ export default function Header() {
 
       {/* Right: actions */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {/* Search hint */}
-        <button
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "6px 12px",
-            borderRadius: 8,
-            border: "1px solid rgba(15,52,96,0.1)",
-            background: "#f8fafc",
-            color: "#94a3b8",
-            fontSize: 13,
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          <IconSearch size={14} />
-          <span>Search…</span>
-          <kbd
-            style={{
-              fontSize: 11,
-              padding: "1px 5px",
-              borderRadius: 4,
-              background: "#f1f5f9",
-              border: "1px solid #e2e8f0",
-              color: "#94a3b8",
-              marginLeft: 4,
-            }}
-          >
-            ⌘K
-          </kbd>
-        </button>
-
-        {/* Notifications */}
-        <button
-          style={{
-            width: 36,
-            height: 36,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 8,
-            border: "1px solid rgba(15,52,96,0.1)",
-            background: "#f8fafc",
-            color: "#475569",
-            cursor: "pointer",
-            position: "relative",
-          }}
-          aria-label="Notifications"
-        >
-          <IconBell size={17} />
-          <span
-            style={{
-              position: "absolute",
-              top: 7,
-              right: 7,
-              width: 7,
-              height: 7,
-              borderRadius: "50%",
-              background: "#2e7cc4",
-              border: "1.5px solid #fff",
-            }}
-          />
-        </button>
-
-        {/* Divider */}
-        <div style={{ width: 1, height: 24, background: "rgba(15,52,96,0.08)" }} />
-
         {/* User avatar */}
         <div
           style={{
@@ -133,7 +66,7 @@ export default function Header() {
             flexShrink: 0,
           }}
         >
-          AD
+          VD
         </div>
 
         {/* Logout */}

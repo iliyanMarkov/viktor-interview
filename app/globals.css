@@ -29,3 +29,10 @@ body {
   border-color: #2e7cc4 !important;
   box-shadow: 0 4px 12px rgba(15, 52, 96, 0.1) !important;
 }
+
+/* On mobile, shift header title right so it clears the hamburger button */
+@media (max-width: 767px) {
+  .app-header {
+    padding-left: 60px !important;
+  }
+}
