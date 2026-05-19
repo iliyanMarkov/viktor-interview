@@ -3,10 +3,24 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import * as THREE from 'three';
 import {
-  Anchor, Navigation, Radio, Users, Wind, Activity, Signal, X,
-  MapPin, Calendar, Briefcase, Phone, Globe2,
-} from 'lucide-react';
+  IconAnchor,
+  IconNavigation,
+  IconUsers,
+  IconWind,
+  IconX,
+  IconMapPin,
+  IconCalendar,
+  IconBriefcase,
+  IconGlobe,
+  IconShip,
+  IconCircleFilled,
+  IconSatellite,
+  IconWifi,
+  IconCloudRain,
+  IconLock,
+} from '@tabler/icons-react';
 
+/* ── Geo helper ─────────────────────────────────────────── */
 const latLonToVector3 = (lat: number, lon: number, radius: number) => {
   const phi = (90 - lat) * (Math.PI / 180);
   const theta = (lon + 180) * (Math.PI / 180);
@@ -17,6 +31,7 @@ const latLonToVector3 = (lat: number, lon: number, radius: number) => {
   );
 };
 
+/* ── Types ──────────────────────────────────────────────── */
 interface CrewMember {
   name: string;
   role: string;
@@ -42,6 +57,7 @@ interface Ship {
   crew: CrewMember[];
 }
 
+/* ── Data ───────────────────────────────────────────────── */
 const SHIPS: Ship[] = [
   {
     id: 'MV-AURORA-7', name: 'MV Aurora', type: 'Container Vessel', flag: 'Panama',
@@ -136,85 +152,88 @@ const SHIPS: Ship[] = [
   },
 ];
 
-const STATUS_COLORS: Record<Ship['status'], string> = {
-  underway: '#5eead4',
-  anchored: '#fbbf24',
-  'in-port': '#f472b6',
+/* ── Status theme — aligned with project palette ─────────── */
+const STATUS_THEME = {
+  underway: { dot: '#22c55e', bg: '#dcfce7', text: '#166534', label: 'Underway',  globe: 0x22c55e },
+  anchored: { dot: '#f59e0b', bg: '#fef3c7', text: '#92400e', label: 'Anchored',  globe: 0xf59e0b },
+  'in-port':{ dot: '#3b82f6', bg: '#dbeafe', text: '#1e40af', label: 'In Port',   globe: 0x3b82f6 },
+} as const;
+
+/* Globe marker colors (THREE hex) keyed by status */
+const STATUS_COLORS: Record<Ship['status'], number> = {
+  underway:  STATUS_THEME.underway.globe,
+  anchored:  STATUS_THEME.anchored.globe,
+  'in-port': STATUS_THEME['in-port'].globe,
 };
 
-const STATUS_LABELS: Record<Ship['status'], string> = {
-  underway: 'UNDERWAY',
-  anchored: 'ANCHORED',
-  'in-port': 'IN PORT',
-};
-
+/* ── Landmass polygons (simplified Natural Earth) ────────── */
 const LANDMASSES: [number, number][][] = [
-  // North America
   [[-168,65.5],[-164,67],[-156,71],[-148,70.5],[-141,69.5],[-133,69.5],[-128,70],[-115,73],[-105,73],[-95,74],[-85,73],[-78,72],[-75,68],[-78,63],[-82,60],[-77,57],[-69,58],[-65,54],[-60,53],[-55,52],[-52,48],[-58,46],[-63,45],[-66,44],[-70,43],[-71,41],[-74,40],[-75,38],[-76,37],[-78,34],[-81,32],[-81,30],[-80,27],[-82,25],[-83,28],[-87,30],[-89,29],[-94,29],[-97,28],[-97,26],[-100,25],[-105,22],[-107,25],[-110,23],[-115,29],[-117,33],[-121,35],[-122,37],[-124,40],[-124,46],[-122,48],[-125,50],[-131,52],[-135,57],[-141,60],[-150,59],[-153,57],[-158,55],[-163,55],[-166,60],[-168,65.5]],
-  // Greenland
   [[-45,83],[-30,83],[-22,80],[-20,76],[-22,70],[-25,65],[-35,60],[-43,60],[-50,64],[-55,68],[-58,72],[-55,77],[-50,80],[-45,83]],
-  // Baffin Island
   [[-80,73],[-72,72],[-65,70],[-65,67],[-72,65],[-78,66],[-82,70],[-80,73]],
-  // Cuba
   [[-85,22],[-79,22],[-74,20],[-78,20],[-83,21],[-85,22]],
-  // Hispaniola
   [[-74,20],[-68,19],[-69,18],[-74,18],[-74,20]],
-  // Newfoundland
   [[-59,52],[-53,51],[-53,47],[-58,46],[-59,52]],
-  // Vancouver Island
   [[-128,51],[-123,49],[-124,48],[-128,49],[-128,51]],
-  // South America
   [[-81,12],[-76,12],[-71,12],[-66,11],[-60,8],[-55,5],[-51,4],[-50,0],[-48,-2],[-44,-3],[-38,-5],[-35,-8],[-37,-12],[-39,-18],[-42,-23],[-48,-28],[-54,-34],[-57,-39],[-62,-40],[-65,-42],[-66,-45],[-68,-50],[-69,-53],[-72,-54],[-74,-50],[-74,-44],[-73,-37],[-72,-30],[-71,-25],[-70,-18],[-72,-14],[-77,-12],[-79,-8],[-81,-5],[-80,-2],[-78,1],[-77,4],[-78,8],[-81,12]],
-  // Europe / West Asia coastline (Mediterranean)
   [[-10,36],[-6,36],[-2,36],[3,37],[8,38],[12,38],[15,40],[18,40],[22,40],[23,38],[26,38],[28,37],[30,37],[33,36],[36,36],[36,34],[35,32],[34,30],[32,31],[30,31],[27,31],[24,32],[20,32],[15,32],[11,33],[8,34],[2,35],[-2,35],[-6,35],[-9,33],[-10,36]],
-  // Eurasia main
   [[-10,36],[-9,43],[-5,44],[-2,44],[0,46],[2,49],[1,51],[4,52],[8,54],[12,54],[14,55],[15,57],[18,59],[22,60],[24,65],[26,68],[30,70],[35,71],[40,68],[45,66],[50,68],[55,71],[60,72],[68,72],[75,73],[80,73],[90,74],[100,75],[110,76],[120,73],[130,71],[140,72],[150,69],[160,69],[170,68],[178,68],[178,65],[170,64],[160,60],[155,57],[145,57],[140,55],[135,55],[133,52],[140,46],[143,45],[140,40],[135,38],[130,35],[126,35],[122,30],[120,25],[112,21],[108,18],[105,12],[107,10],[110,3],[113,1],[110,-5],[105,-5],[100,2],[97,5],[95,15],[90,22],[86,21],[82,21],[80,15],[77,8],[73,9],[70,21],[68,24],[66,25],[60,25],[57,25],[52,28],[48,30],[45,28],[42,15],[44,12],[51,12],[51,18],[55,22],[57,17],[55,12],[51,4],[48,11],[42,11],[40,5],[40,-2],[43,-12],[40,-15],[35,-20],[32,-26],[28,-33],[22,-34],[18,-34],[15,-30],[12,-20],[14,-15],[12,-10],[14,-5],[10,3],[8,5],[3,6],[-2,5],[-7,7],[-10,8],[-15,12],[-17,17],[-15,21],[-13,27],[-10,30],[-10,36]],
-  // British Isles
   [[-8,58],[-6,58],[-3,59],[-2,57],[0,55],[1,53],[-2,51],[-5,50],[-6,52],[-5,55],[-8,58]],
-  // Ireland
   [[-10,54],[-7,54],[-6,52],[-10,52],[-10,54]],
-  // Iceland
   [[-24,66],[-14,66],[-13,64],[-22,63],[-24,66]],
-  // Japan (Honshu)
   [[131,34],[136,35],[140,36],[142,40],[141,42],[136,37],[133,35],[131,34]],
-  // Japan (Hokkaido)
   [[140,42],[145,44],[144,45],[140,45],[140,42]],
-  // Sri Lanka
   [[80,9],[82,8],[82,6],[80,7],[80,9]],
-  // Borneo
   [[109,1],[117,5],[119,1],[117,-3],[112,-3],[109,1]],
-  // Sumatra
   [[95,5],[100,4],[105,-2],[103,-5],[97,-1],[95,5]],
-  // Java
   [[105,-6],[114,-7],[115,-8],[106,-8],[105,-6]],
-  // Sulawesi
   [[119,1],[125,1],[125,-5],[121,-5],[119,1]],
-  // New Guinea
   [[131,-1],[141,-2],[151,-6],[150,-10],[141,-9],[134,-8],[131,-4],[131,-1]],
-  // Philippines (Luzon)
   [[120,14],[122,18],[122,14],[120,13],[120,14]],
-  // Philippines (Mindanao)
   [[122,7],[126,9],[126,6],[123,6],[122,7]],
-  // Taiwan
   [[120,22],[122,25],[122,22],[120,22]],
-  // Sakhalin
   [[142,46],[144,54],[143,46],[142,46]],
-  // Africa
   [[-17,21],[-16,15],[-15,12],[-10,8],[-5,5],[3,6],[8,5],[10,3],[14,-5],[12,-10],[14,-15],[12,-20],[15,-30],[18,-34],[22,-34],[28,-33],[32,-26],[35,-20],[40,-15],[43,-12],[40,-2],[40,5],[42,11],[48,11],[51,4],[55,12],[57,17],[55,22],[51,18],[51,12],[44,12],[42,15],[37,18],[34,22],[30,24],[27,28],[24,31],[20,32],[15,32],[11,33],[8,34],[2,35],[-2,35],[-6,35],[-9,33],[-12,28],[-15,25],[-17,21]],
-  // Madagascar
   [[43,-12],[50,-15],[50,-22],[46,-25],[43,-22],[43,-12]],
-  // Australia
   [[114,-22],[122,-18],[129,-15],[136,-12],[140,-12],[143,-13],[145,-15],[147,-19],[150,-22],[153,-25],[153,-28],[150,-33],[149,-37],[146,-39],[141,-38],[136,-35],[132,-32],[127,-32],[120,-34],[115,-34],[113,-26],[114,-22]],
-  // Tasmania
   [[144,-40],[148,-40],[148,-43],[145,-43],[144,-40]],
-  // New Zealand (North)
   [[173,-35],[178,-37],[177,-41],[173,-39],[173,-35]],
-  // New Zealand (South)
   [[166,-46],[174,-41],[174,-46],[168,-47],[166,-46]],
-  // Antarctica
   [[-180,-65],[-150,-72],[-120,-73],[-90,-72],[-60,-65],[-30,-68],[0,-70],[30,-69],[60,-67],[90,-67],[120,-66],[150,-72],[180,-72],[180,-90],[-180,-90],[-180,-65]],
 ];
 
+/* ── Small reusable pieces ──────────────────────────────── */
+function StatCard({ value, label, color }: { value: number; label: string; color?: string }) {
+  return (
+    <div style={{
+      background: '#fff',
+      border: '1px solid rgba(15,52,96,0.08)',
+      borderRadius: 10,
+      padding: '14px 16px',
+      boxShadow: '0 1px 2px rgba(15,52,96,0.04)',
+    }}>
+      <div style={{ fontSize: 26, fontWeight: 700, color: color ?? '#0a2540', lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>{label}</div>
+    </div>
+  );
+}
+
+function StatusPill({ status }: { status: Ship['status'] }) {
+  const t = STATUS_THEME[status];
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      fontSize: 11, fontWeight: 500,
+      padding: '2px 8px', borderRadius: 20,
+      background: t.bg, color: t.text,
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: t.dot, display: 'inline-block' }} />
+      {t.label}
+    </span>
+  );
+}
+
+/* ── Main component ─────────────────────────────────────── */
 export default function ShipMonitor() {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -238,6 +257,7 @@ export default function ShipMonitor() {
     return () => clearInterval(interval);
   }, []);
 
+  /* ── Three.js setup ─────────────────────────────────── */
   useEffect(() => {
     if (!mountRef.current) return;
 
@@ -260,21 +280,23 @@ export default function ShipMonitor() {
     const globeRadius = 1.8;
     const globeGeo = new THREE.SphereGeometry(globeRadius, 96, 96);
 
+    /* Canvas texture */
     const canvas = document.createElement('canvas');
     canvas.width = 2048;
     canvas.height = 1024;
     const ctx = canvas.getContext('2d')!;
 
-    ctx.fillStyle = '#0a1f33';
+    ctx.fillStyle = '#0a1929';
     ctx.fillRect(0, 0, 2048, 1024);
 
     const oceanGrad = ctx.createRadialGradient(1024, 512, 0, 1024, 512, 1024);
-    oceanGrad.addColorStop(0, 'rgba(20, 50, 75, 0.4)');
-    oceanGrad.addColorStop(1, 'rgba(5, 13, 24, 0.3)');
+    oceanGrad.addColorStop(0, 'rgba(20, 45, 80, 0.5)');
+    oceanGrad.addColorStop(1, 'rgba(5, 13, 28, 0.4)');
     ctx.fillStyle = oceanGrad;
     ctx.fillRect(0, 0, 2048, 1024);
 
-    ctx.strokeStyle = 'rgba(94, 234, 212, 0.06)';
+    /* Grid lines */
+    ctx.strokeStyle = 'rgba(46, 124, 196, 0.08)';
     ctx.lineWidth = 1;
     for (let lon = -180; lon <= 180; lon += 15) {
       const x = ((lon + 180) / 360) * 2048;
@@ -284,7 +306,7 @@ export default function ShipMonitor() {
       const y = ((90 - lat) / 180) * 1024;
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(2048, y); ctx.stroke();
     }
-    ctx.strokeStyle = 'rgba(94, 234, 212, 0.18)';
+    ctx.strokeStyle = 'rgba(46, 124, 196, 0.2)';
     ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.moveTo(0, 512); ctx.lineTo(2048, 512); ctx.stroke();
 
@@ -293,6 +315,7 @@ export default function ShipMonitor() {
       ((90 - lat) / 180) * 1024,
     ];
 
+    /* Landmasses — project blue palette */
     LANDMASSES.forEach(polygon => {
       ctx.beginPath();
       polygon.forEach(([lon, lat], i) => {
@@ -300,9 +323,14 @@ export default function ShipMonitor() {
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       });
       ctx.closePath();
-      ctx.fillStyle = '#1e5560'; ctx.fill();
-      ctx.strokeStyle = '#5eead4'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.strokeStyle = 'rgba(125, 211, 192, 0.4)'; ctx.lineWidth = 4; ctx.stroke();
+      ctx.fillStyle = '#143d6e';
+      ctx.fill();
+      ctx.strokeStyle = '#2e7cc4';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(46, 124, 196, 0.35)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
     });
 
     LANDMASSES.forEach(polygon => {
@@ -315,7 +343,7 @@ export default function ShipMonitor() {
       ctx.closePath();
       ctx.clip();
       for (let i = 0; i < 600; i++) {
-        ctx.fillStyle = `rgba(94, 234, 212, ${0.05 + Math.random() * 0.1})`;
+        ctx.fillStyle = `rgba(46, 124, 196, ${0.04 + Math.random() * 0.08})`;
         ctx.fillRect(Math.random() * 2048, Math.random() * 1024, 1.5, 1.5);
       }
       ctx.restore();
@@ -327,21 +355,22 @@ export default function ShipMonitor() {
 
     const globeMat = new THREE.MeshPhongMaterial({
       map: earthTexture,
-      emissive: 0x0a1929,
-      emissiveIntensity: 0.4,
-      shininess: 12,
-      specular: 0x1a4a5a,
+      emissive: 0x081526,
+      emissiveIntensity: 0.35,
+      shininess: 10,
+      specular: 0x1a3a6a,
     });
 
     const globe = new THREE.Mesh(globeGeo, globeMat);
     globeRef.current = globe;
     scene.add(globe);
 
+    /* Atmospheric glow — project blue */
     const glowGeo = new THREE.SphereGeometry(globeRadius * 1.08, 64, 64);
     const glowMat = new THREE.ShaderMaterial({
       transparent: true,
       side: THREE.BackSide,
-      uniforms: { glowColor: { value: new THREE.Color(0x5eead4) } },
+      uniforms: { glowColor: { value: new THREE.Color(0x2e7cc4) } },
       vertexShader: `
         varying vec3 vNormal;
         void main() {
@@ -354,24 +383,24 @@ export default function ShipMonitor() {
         varying vec3 vNormal;
         void main() {
           float intensity = pow(0.7 - dot(vNormal, vec3(0, 0, 1.0)), 2.0);
-          gl_FragColor = vec4(glowColor, 1.0) * intensity * 0.6;
+          gl_FragColor = vec4(glowColor, 1.0) * intensity * 0.55;
         }
       `,
     });
     scene.add(new THREE.Mesh(glowGeo, glowMat));
 
     const wireGeo = new THREE.SphereGeometry(globeRadius * 1.002, 32, 16);
-    const wireMat = new THREE.MeshBasicMaterial({ color: 0x5eead4, wireframe: true, transparent: true, opacity: 0.06 });
-    globe.add(new THREE.Mesh(wireGeo, wireMat));
+    globe.add(new THREE.Mesh(wireGeo, new THREE.MeshBasicMaterial({ color: 0x2e7cc4, wireframe: true, transparent: true, opacity: 0.05 })));
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.5));
     const dirLight = new THREE.DirectionalLight(0xfef3c7, 0.8);
     dirLight.position.set(5, 3, 5);
     scene.add(dirLight);
-    const rimLight = new THREE.DirectionalLight(0x5eead4, 0.4);
+    const rimLight = new THREE.DirectionalLight(0x2e7cc4, 0.35);
     rimLight.position.set(-5, 0, -3);
     scene.add(rimLight);
 
+    /* Markers */
     const markerGroup = new THREE.Group();
     markerGroupRef.current = markerGroup;
     globe.add(markerGroup);
@@ -382,11 +411,11 @@ export default function ShipMonitor() {
 
       const ring = new THREE.Mesh(
         new THREE.RingGeometry(0.04, 0.07, 24),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.4, side: THREE.DoubleSide }),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.45, side: THREE.DoubleSide }),
       );
       ring.position.copy(pos);
       ring.lookAt(0, 0, 0);
-      ring.userData = { isMarker: true, shipId: ship.id, type: 'ring', baseOpacity: 0.4, phase: idx * 0.7 };
+      ring.userData = { isMarker: true, shipId: ship.id, type: 'ring', baseOpacity: 0.45, phase: idx * 0.7 };
       markerGroup.add(ring);
 
       const dot = new THREE.Mesh(
@@ -399,7 +428,7 @@ export default function ShipMonitor() {
 
       const beam = new THREE.Mesh(
         new THREE.CylinderGeometry(0.005, 0.005, 0.25, 6),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5 }),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.45 }),
       );
       beam.position.copy(latLonToVector3(ship.lat, ship.lon, globeRadius * 1.14));
       beam.lookAt(0, 0, 0);
@@ -408,10 +437,10 @@ export default function ShipMonitor() {
       markerGroup.add(beam);
     });
 
+    /* Stars */
     const starsGeo = new THREE.BufferGeometry();
-    const starCount = 800;
-    const starPositions = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount; i++) {
+    const starPositions = new Float32Array(800 * 3);
+    for (let i = 0; i < 800; i++) {
       const r = 30 + Math.random() * 20;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
@@ -420,9 +449,10 @@ export default function ShipMonitor() {
       starPositions[i * 3 + 2] = r * Math.cos(phi);
     }
     starsGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const stars = new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, transparent: true, opacity: 0.6 }));
+    const stars = new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, transparent: true, opacity: 0.5 }));
     scene.add(stars);
 
+    /* Pointer handlers */
     const handlePointerDown = (e: PointerEvent) => {
       isDraggingRef.current = true;
       autoRotateRef.current = false;
@@ -433,7 +463,6 @@ export default function ShipMonitor() {
 
     const handlePointerMove = (e: PointerEvent) => {
       const { clientX, clientY } = e;
-
       if (isDraggingRef.current) {
         const dx = clientX - previousMouseRef.current.x;
         const dy = clientY - previousMouseRef.current.y;
@@ -443,11 +472,9 @@ export default function ShipMonitor() {
         previousMouseRef.current = { x: clientX, y: clientY };
         return;
       }
-
       const rect = renderer.domElement.getBoundingClientRect();
       mouseRef.current.x = ((clientX - rect.left) / rect.width) * 2 - 1;
       mouseRef.current.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
       raycasterRef.current.setFromCamera(mouseRef.current, camera);
       const intersects = raycasterRef.current.intersectObjects(markerGroup.children, false);
       const hit = intersects.find(i => i.object.userData.isMarker);
@@ -491,6 +518,7 @@ export default function ShipMonitor() {
     };
     renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
 
+    /* Animation loop */
     let frameId: number;
     const timer = new THREE.Timer();
     const animate = () => {
@@ -548,616 +576,378 @@ export default function ShipMonitor() {
   }), []);
 
   const hoveredShipData = hoveredShip ? SHIPS.find(s => s.id === hoveredShip) : null;
-  const utcTime = time.toISOString().split('T')[1].split('.')[0];
+  const utcTime = time.toISOString().split('T')[1].split('.')[0] + ' UTC';
 
+  /* ── Render ─────────────────────────────────────────── */
   return (
-    <div className="ship-monitor">
+    <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Oswald:wght@300;400;500;600&display=swap');
-
-        .ship-monitor {
-          font-family: 'JetBrains Mono', monospace;
-          background: radial-gradient(ellipse at top, #0d2438 0%, #050d18 50%, #020509 100%);
-          color: #cbd5e1;
-          height: 100%;
-          width: 100%;
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .ship-monitor::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(94, 234, 212, 0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(94, 234, 212, 0.025) 1px, transparent 1px);
-          background-size: 40px 40px;
-          pointer-events: none;
-          z-index: 1;
-        }
-
-        .ship-monitor::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.4) 100%);
-          pointer-events: none;
-          z-index: 2;
-        }
-
-        .sm-header {
-          position: relative;
-          z-index: 10;
-          padding: 14px 32px;
-          border-bottom: 1px solid rgba(94, 234, 212, 0.15);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          background: rgba(5, 13, 24, 0.6);
-          backdrop-filter: blur(10px);
-          flex-shrink: 0;
-        }
-
-        .sm-brand { display: flex; align-items: center; gap: 14px; }
-
-        .sm-brand-logo {
-          width: 36px; height: 36px;
-          border: 1px solid #5eead4;
-          display: flex; align-items: center; justify-content: center;
-          color: #5eead4; position: relative;
-        }
-
-        .sm-brand-logo::before {
-          content: '';
-          position: absolute; inset: -3px;
-          border: 1px solid rgba(94, 234, 212, 0.3);
-        }
-
-        .sm-brand-text h2 {
-          font-family: 'Oswald', sans-serif;
-          font-size: 18px; font-weight: 500;
-          letter-spacing: 4px; color: #f1f5f9; line-height: 1;
-        }
-
-        .sm-brand-text p {
-          font-size: 9px; letter-spacing: 3px; color: #5eead4;
-          margin-top: 3px; text-transform: uppercase;
-        }
-
-        .sm-header-right { display: flex; gap: 28px; align-items: center; }
-
-        .sm-header-stat { text-align: right; }
-        .sm-header-stat .label { font-size: 9px; letter-spacing: 2px; color: #64748b; text-transform: uppercase; }
-        .sm-header-stat .value {
-          font-family: 'Oswald', sans-serif;
-          font-size: 16px; color: #f1f5f9; letter-spacing: 1px; margin-top: 2px;
-        }
-        .sm-header-stat .value.live {
-          color: #5eead4; display: flex; align-items: center; gap: 8px; justify-content: flex-end;
-        }
-
-        .sm-live-dot {
-          width: 7px; height: 7px; border-radius: 50%;
-          background: #5eead4; box-shadow: 0 0 8px #5eead4;
-          animation: sm-pulse 2s infinite;
-        }
-
-        @keyframes sm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-        .sm-main {
-          position: relative; z-index: 5;
-          display: grid;
-          grid-template-columns: 260px 1fr 300px;
-          flex: 1; min-height: 0;
-        }
-
-        @media (max-width: 1100px) {
-          .sm-main { grid-template-columns: 1fr; }
-          .sm-side { display: none; }
-        }
-
-        .sm-side {
-          background: rgba(5, 13, 24, 0.5);
-          backdrop-filter: blur(8px);
-          border-right: 1px solid rgba(94, 234, 212, 0.1);
-          padding: 20px; overflow-y: auto;
-        }
-
-        .sm-side.right { border-right: none; border-left: 1px solid rgba(94, 234, 212, 0.1); }
-
-        .sm-panel-title {
-          font-family: 'Oswald', sans-serif;
-          font-size: 11px; letter-spacing: 3px; color: #5eead4;
-          text-transform: uppercase;
-          padding-bottom: 10px;
-          border-bottom: 1px solid rgba(94, 234, 212, 0.15);
-          margin-bottom: 14px;
-          display: flex; align-items: center; gap: 8px;
-        }
-
-        .sm-panel-title .corner {
-          width: 8px; height: 8px;
-          border-left: 1px solid #5eead4; border-top: 1px solid #5eead4;
-        }
-
-        .sm-stat-grid {
-          display: grid; grid-template-columns: 1fr 1fr;
-          gap: 8px; margin-bottom: 20px;
-        }
-
-        .sm-stat-card {
-          padding: 12px 10px;
-          background: rgba(94, 234, 212, 0.04);
-          border: 1px solid rgba(94, 234, 212, 0.12);
-          position: relative;
-        }
-
-        .sm-stat-card::before {
-          content: '';
-          position: absolute; top: 0; left: 0;
-          width: 6px; height: 6px;
-          border-top: 1px solid #5eead4; border-left: 1px solid #5eead4;
-        }
-
-        .sm-stat-card .num {
-          font-family: 'Oswald', sans-serif;
-          font-size: 24px; color: #f1f5f9; line-height: 1;
-        }
-
-        .sm-stat-card .lbl {
-          font-size: 8px; letter-spacing: 2px; color: #64748b;
-          margin-top: 5px; text-transform: uppercase;
-        }
-
-        .sm-stat-card.full { grid-column: span 2; }
-        .sm-stat-card.full .num { font-size: 20px; }
-
-        .sm-ship-item {
-          padding: 10px;
-          background: rgba(94, 234, 212, 0.02);
-          border: 1px solid rgba(94, 234, 212, 0.08);
-          margin-bottom: 6px; cursor: pointer;
-          transition: all 0.2s; position: relative;
-        }
-
-        .sm-ship-item:hover {
-          background: rgba(94, 234, 212, 0.08);
-          border-color: rgba(94, 234, 212, 0.3);
-          transform: translateX(2px);
-        }
-
-        .sm-ship-item.active {
-          background: rgba(94, 234, 212, 0.1);
-          border-color: #5eead4;
-        }
-
-        .sm-ship-item .id-row {
-          display: flex; justify-content: space-between; align-items: center;
-          margin-bottom: 4px;
-        }
-
-        .sm-ship-item .ship-id { font-size: 9px; letter-spacing: 1.5px; color: #64748b; }
-
-        .sm-status-pill {
-          font-size: 8px; letter-spacing: 1.5px;
-          padding: 2px 5px; border: 1px solid;
-        }
-
-        .sm-ship-item .ship-name {
-          font-family: 'Oswald', sans-serif;
-          font-size: 14px; color: #f1f5f9; letter-spacing: 1px;
-        }
-
-        .sm-ship-item .ship-type { font-size: 9px; color: #94a3b8; margin-top: 2px; }
-
-        .sm-globe-area { position: relative; overflow: hidden; }
-
-        .sm-globe-canvas { width: 100%; height: 100%; touch-action: none; }
-
-        .sm-overlay-tl, .sm-overlay-tr, .sm-overlay-bl, .sm-overlay-br {
-          position: absolute;
-          font-size: 9px; letter-spacing: 2px;
-          color: rgba(94, 234, 212, 0.6);
-          pointer-events: none; z-index: 4;
-        }
-
-        .sm-overlay-tl { top: 16px; left: 16px; }
-        .sm-overlay-tr { top: 16px; right: 16px; text-align: right; }
-        .sm-overlay-bl { bottom: 16px; left: 16px; }
-        .sm-overlay-br { bottom: 16px; right: 16px; text-align: right; }
-
-        .sm-corner { position: absolute; width: 12px; height: 12px; border: 1px solid rgba(94, 234, 212, 0.5); z-index: 4; pointer-events: none; }
-        .sm-corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
-        .sm-corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
-        .sm-corner.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
-        .sm-corner.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
-
-        .sm-tooltip {
-          position: absolute; top: 50%; left: 26px;
-          background: rgba(5, 13, 24, 0.95);
-          border: 1px solid #5eead4;
-          padding: 10px 14px; font-size: 11px; color: #f1f5f9;
-          z-index: 5; pointer-events: none; transform: translateY(-50%);
-        }
-
-        .sm-tooltip .h-name { font-family: 'Oswald', sans-serif; font-size: 14px; letter-spacing: 1px; color: #5eead4; margin-bottom: 3px; }
-        .sm-tooltip .h-id { font-size: 9px; color: #64748b; letter-spacing: 1.5px; }
-
-        .sm-legend {
-          position: absolute; top: 50px; right: 16px;
-          background: rgba(5, 13, 24, 0.7);
-          backdrop-filter: blur(6px);
-          border: 1px solid rgba(94, 234, 212, 0.15);
-          padding: 10px 12px; z-index: 4;
-        }
-
-        .sm-legend-title { font-size: 9px; letter-spacing: 2px; color: #5eead4; margin-bottom: 8px; }
-
-        .sm-legend-item { display: flex; align-items: center; gap: 7px; font-size: 10px; color: #cbd5e1; margin-bottom: 5px; }
-        .sm-legend-item:last-child { margin-bottom: 0; }
-        .sm-legend-dot { width: 7px; height: 7px; border-radius: 50%; }
-
-        .sm-instructions {
-          position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-          font-size: 9px; letter-spacing: 2px; color: rgba(203, 213, 225, 0.5);
-          text-transform: uppercase; z-index: 4; pointer-events: none; text-align: center;
-          white-space: nowrap;
-        }
-
-        /* Modal */
-        .sm-backdrop {
-          position: fixed; inset: 0;
-          background: rgba(2, 5, 9, 0.85);
-          backdrop-filter: blur(8px);
-          z-index: 1000;
-          display: flex; align-items: center; justify-content: center;
-          padding: 24px;
-          animation: sm-fadeIn 0.2s ease;
-        }
-
-        @keyframes sm-fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes sm-slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        .sm-modal {
-          background: linear-gradient(180deg, #0a1929 0%, #050d18 100%);
-          border: 1px solid #5eead4;
-          width: 100%; max-width: 920px; max-height: 90vh;
-          overflow-y: auto; position: relative;
-          animation: sm-slideUp 0.3s ease;
-          box-shadow: 0 0 60px rgba(94, 234, 212, 0.15);
-        }
-
-        .sm-modal::before, .sm-modal::after {
-          content: ''; position: absolute; width: 22px; height: 22px;
-        }
-        .sm-modal::before { top: -1px; left: -1px; border-top: 2px solid #5eead4; border-left: 2px solid #5eead4; }
-        .sm-modal::after { bottom: -1px; right: -1px; border-bottom: 2px solid #5eead4; border-right: 2px solid #5eead4; }
-
-        .sm-modal-header {
-          padding: 22px 28px;
-          border-bottom: 1px solid rgba(94, 234, 212, 0.15);
-          display: flex; justify-content: space-between; align-items: flex-start;
-        }
-
-        .sm-modal-title .vessel-id { font-size: 10px; letter-spacing: 3px; color: #5eead4; margin-bottom: 5px; }
-        .sm-modal-title h2 { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 500; letter-spacing: 2px; color: #f1f5f9; line-height: 1; }
-        .sm-modal-title .vessel-type { font-size: 11px; color: #94a3b8; margin-top: 5px; letter-spacing: 1px; }
-
-        .sm-close-btn {
-          background: transparent; border: 1px solid rgba(94, 234, 212, 0.4);
-          color: #cbd5e1; padding: 7px; cursor: pointer; transition: all 0.2s;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .sm-close-btn:hover { border-color: #f472b6; color: #f472b6; }
-
-        .sm-modal-body { padding: 24px 28px; }
-
-        .sm-vessel-stats {
-          display: grid; grid-template-columns: repeat(4, 1fr);
-          gap: 12px; margin-bottom: 28px;
-        }
-
-        @media (max-width: 700px) { .sm-vessel-stats { grid-template-columns: repeat(2, 1fr); } }
-
-        .sm-vessel-stat {
-          padding: 12px;
-          background: rgba(94, 234, 212, 0.03);
-          border: 1px solid rgba(94, 234, 212, 0.1);
-          position: relative;
-        }
-
-        .sm-vessel-stat .icon { color: #5eead4; margin-bottom: 7px; }
-        .sm-vessel-stat .label { font-size: 9px; letter-spacing: 2px; color: #64748b; margin-bottom: 3px; text-transform: uppercase; }
-        .sm-vessel-stat .value { font-family: 'Oswald', sans-serif; font-size: 17px; color: #f1f5f9; letter-spacing: 1px; }
-
-        .sm-section-heading {
-          font-family: 'Oswald', sans-serif;
-          font-size: 13px; letter-spacing: 3px; color: #5eead4;
-          text-transform: uppercase;
-          display: flex; align-items: center; gap: 10px;
-          margin-bottom: 14px; padding-bottom: 9px;
-          border-bottom: 1px solid rgba(94, 234, 212, 0.15);
-        }
-
-        .sm-section-heading .line { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(94, 234, 212, 0.3), transparent); }
-        .sm-section-heading .count { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94a3b8; letter-spacing: 1px; }
-
-        .sm-crew-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
-
-        .sm-crew-card {
-          background: rgba(94, 234, 212, 0.025);
-          border: 1px solid rgba(94, 234, 212, 0.12);
-          padding: 14px; position: relative; transition: all 0.2s;
-        }
-
-        .sm-crew-card:hover { background: rgba(94, 234, 212, 0.06); border-color: rgba(94, 234, 212, 0.3); }
-
-        .sm-crew-card::before {
-          content: ''; position: absolute; top: -1px; left: -1px;
-          width: 9px; height: 9px;
-          border-top: 1px solid #5eead4; border-left: 1px solid #5eead4;
-        }
-
-        .sm-crew-header { display: flex; gap: 10px; margin-bottom: 10px; }
-
-        .sm-crew-avatar {
-          width: 40px; height: 40px;
-          background: linear-gradient(135deg, rgba(94, 234, 212, 0.2), rgba(94, 234, 212, 0.05));
-          border: 1px solid rgba(94, 234, 212, 0.3);
-          display: flex; align-items: center; justify-content: center;
-          font-family: 'Oswald', sans-serif; font-size: 14px; color: #5eead4;
-          letter-spacing: 1px; flex-shrink: 0;
-        }
-
-        .sm-crew-info { flex: 1; min-width: 0; }
-        .sm-crew-name { font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 1px; color: #f1f5f9; line-height: 1.2; margin-bottom: 3px; }
-        .sm-crew-role { font-size: 10px; color: #5eead4; letter-spacing: 1.5px; text-transform: uppercase; }
-
-        .sm-crew-details { display: flex; flex-direction: column; gap: 5px; }
-        .sm-crew-detail { display: flex; align-items: center; gap: 7px; font-size: 10px; color: #94a3b8; }
-        .sm-crew-detail .key { color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-size: 9px; min-width: 55px; }
-        .sm-crew-detail .val { color: #cbd5e1; font-size: 10px; word-break: break-all; }
-
-        .sm-sys-status { font-size: 10px; line-height: 2; color: #94a3b8; }
-        .sm-sys-row { display: flex; justify-content: space-between; }
+        .sm-ship-item:hover { background: #f8fafc !important; }
+        .sm-crew-card:hover  { background: #f8fafc !important; }
+        @keyframes sm-live { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        @keyframes sm-fadein { from{opacity:0} to{opacity:1} }
+        @keyframes sm-slideup { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
       `}</style>
 
-      {/* Inner header with nautical status info */}
-      <header className="sm-header">
-        <div className="sm-brand">
-          <div className="sm-brand-logo">
-            <Anchor size={18} strokeWidth={1.5} />
-          </div>
-          <div className="sm-brand-text">
-            <h2>MARITIME COMMAND</h2>
-            <p>Fleet Tracking System · v4.2.1</p>
-          </div>
-        </div>
-        <div className="sm-header-right">
-          <div className="sm-header-stat">
-            <div className="label">UTC TIME</div>
-            <div className="value">{utcTime}</div>
-          </div>
-          <div className="sm-header-stat">
-            <div className="label">SIGNAL STATUS</div>
-            <div className="value live"><span className="sm-live-dot" /><span>LIVE</span></div>
-          </div>
-        </div>
-      </header>
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#f1f5f9', overflow: 'hidden' }}>
 
-      <div className="sm-main">
-        {/* LEFT PANEL */}
-        <aside className="sm-side">
-          <div className="sm-panel-title"><span className="corner" />FLEET OVERVIEW</div>
-          <div className="sm-stat-grid">
-            <div className="sm-stat-card">
-              <div className="num">{stats.total}</div>
-              <div className="lbl">VESSELS</div>
-            </div>
-            <div className="sm-stat-card">
-              <div className="num" style={{ color: '#5eead4' }}>{stats.underway}</div>
-              <div className="lbl">UNDERWAY</div>
-            </div>
-            <div className="sm-stat-card">
-              <div className="num" style={{ color: '#fbbf24' }}>{stats.anchored}</div>
-              <div className="lbl">ANCHORED</div>
-            </div>
-            <div className="sm-stat-card">
-              <div className="num" style={{ color: '#f472b6' }}>{stats.inPort}</div>
-              <div className="lbl">IN PORT</div>
-            </div>
-            <div className="sm-stat-card full">
-              <div className="num">{stats.totalCrew}</div>
-              <div className="lbl">TOTAL CREW</div>
-            </div>
-          </div>
+        {/* ── Three-column body ── */}
+        <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '264px 1fr 296px' }}>
 
-          <div className="sm-panel-title"><span className="corner" />SYSTEM STATUS</div>
-          <div className="sm-sys-status">
-            {[['SATELLITE', 'ONLINE'], ['AIS UPLINK', 'ACTIVE'], ['WEATHER FEED', 'SYNCED'], ['ENCRYPTION', 'AES-256']].map(([k, v]) => (
-              <div key={k} className="sm-sys-row">
-                <span>{k}</span><span style={{ color: '#5eead4' }}>● {v}</span>
-              </div>
-            ))}
-          </div>
-        </aside>
+          {/* LEFT — Fleet overview */}
+          <aside style={{
+            background: '#fff',
+            borderRight: '1px solid rgba(15,52,96,0.08)',
+            display: 'flex', flexDirection: 'column',
+            overflow: 'hidden',
+          }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-        {/* GLOBE */}
-        <div className="sm-globe-area">
-          <div className="sm-corner tl" />
-          <div className="sm-corner tr" />
-          <div className="sm-corner bl" />
-          <div className="sm-corner br" />
-
-          <div ref={mountRef} className="sm-globe-canvas" />
-
-          <div className="sm-overlay-tl">
-            <div>SECTOR / GLOBAL</div>
-            <div style={{ color: '#f1f5f9', fontSize: '11px', marginTop: '4px' }}>LIVE FEED</div>
-          </div>
-          <div className="sm-overlay-tr">
-            <div>RESOLUTION / 4K</div>
-            <div style={{ color: '#f1f5f9', fontSize: '11px', marginTop: '4px' }}>STEREOSCOPIC</div>
-          </div>
-          <div className="sm-overlay-bl">
-            <div>PROJ / ORTHOGRAPHIC</div>
-            <div style={{ color: '#f1f5f9', fontSize: '11px', marginTop: '4px' }}>WGS-84 DATUM</div>
-          </div>
-          <div className="sm-overlay-br">
-            <div>ZOOM / AUTO</div>
-            <div style={{ color: '#f1f5f9', fontSize: '11px', marginTop: '4px' }}>{SHIPS.length} CONTACTS</div>
-          </div>
-
-          <div className="sm-legend">
-            <div className="sm-legend-title">VESSEL STATUS</div>
-            <div className="sm-legend-item">
-              <span className="sm-legend-dot" style={{ background: '#5eead4', boxShadow: '0 0 6px #5eead4' }} />
-              UNDERWAY
-            </div>
-            <div className="sm-legend-item">
-              <span className="sm-legend-dot" style={{ background: '#fbbf24', boxShadow: '0 0 6px #fbbf24' }} />
-              ANCHORED
-            </div>
-            <div className="sm-legend-item">
-              <span className="sm-legend-dot" style={{ background: '#f472b6', boxShadow: '0 0 6px #f472b6' }} />
-              IN PORT
-            </div>
-          </div>
-
-          {hoveredShipData && (
-            <div className="sm-tooltip">
-              <div className="h-id">{hoveredShipData.id}</div>
-              <div className="h-name">{hoveredShipData.name}</div>
-              <div style={{ color: '#94a3b8', fontSize: '10px' }}>{hoveredShipData.type}</div>
-              <div style={{ fontSize: '9px', color: '#5eead4', marginTop: '6px', letterSpacing: '1.5px' }}>▸ CLICK TO INSPECT</div>
-            </div>
-          )}
-
-          <div className="sm-instructions">DRAG TO ROTATE · SCROLL TO ZOOM · CLICK MARKER FOR DETAILS</div>
-        </div>
-
-        {/* RIGHT PANEL */}
-        <aside className="sm-side right">
-          <div className="sm-panel-title"><span className="corner" />ACTIVE VESSELS</div>
-          {SHIPS.map(ship => (
-            <div
-              key={ship.id}
-              className={`sm-ship-item${hoveredShip === ship.id ? ' active' : ''}`}
-              onClick={() => setSelectedShip(ship)}
-            >
-              <div className="id-row">
-                <span className="ship-id">{ship.id}</span>
-                <span className="sm-status-pill" style={{ color: STATUS_COLORS[ship.status], borderColor: STATUS_COLORS[ship.status] }}>
-                  {STATUS_LABELS[ship.status]}
+              {/* UTC + live badge */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12, fontFamily: 'monospace', color: '#0a2540', fontWeight: 600 }}>{utcTime}</span>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  fontSize: 11, fontWeight: 500,
+                  background: '#dcfce7', color: '#166534',
+                  padding: '2px 8px', borderRadius: 20,
+                }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'sm-live 2s infinite' }} />
+                  Live
                 </span>
               </div>
-              <div className="ship-name">{ship.name}</div>
-              <div className="ship-type">{ship.type} · {ship.flag}</div>
-            </div>
-          ))}
-        </aside>
-      </div>
 
-      {/* SHIP DETAIL MODAL */}
-      {selectedShip && (
-        <div className="sm-backdrop" onClick={() => setSelectedShip(null)}>
-          <div className="sm-modal" onClick={e => e.stopPropagation()}>
-            <div className="sm-modal-header">
-              <div className="sm-modal-title">
-                <div className="vessel-id">▸ VESSEL ID · {selectedShip.id}</div>
-                <h2>{selectedShip.name}</h2>
-                <div className="vessel-type">
-                  {selectedShip.type} · FLAG: {selectedShip.flag} · STATUS:{' '}
-                  <span style={{ color: STATUS_COLORS[selectedShip.status] }}>
-                    {STATUS_LABELS[selectedShip.status]}
-                  </span>
+              {/* Fleet stats */}
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Fleet Overview</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <StatCard value={stats.total}    label="Vessels"  />
+                  <StatCard value={stats.underway}  label="Underway" color="#16a34a" />
+                  <StatCard value={stats.anchored}  label="Anchored" color="#d97706" />
+                  <StatCard value={stats.inPort}    label="In Port"  color="#2563eb" />
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  <StatCard value={stats.totalCrew} label="Total crew aboard" />
                 </div>
               </div>
-              <button className="sm-close-btn" onClick={() => setSelectedShip(null)}>
-                <X size={15} />
+
+              {/* System status */}
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>System Status</p>
+                <div style={{
+                  background: '#fff',
+                  border: '1px solid rgba(15,52,96,0.08)',
+                  borderRadius: 10,
+                  overflow: 'hidden',
+                  boxShadow: '0 1px 2px rgba(15,52,96,0.04)',
+                }}>
+                  {[
+                    { icon: IconSatellite, label: 'Satellite', status: 'Online' },
+                    { icon: IconWifi,      label: 'AIS Uplink', status: 'Active' },
+                    { icon: IconCloudRain, label: 'Weather Feed', status: 'Synced' },
+                    { icon: IconLock,      label: 'Encryption', status: 'AES-256' },
+                  ].map(({ icon: Icon, label, status }, i, arr) => (
+                    <div key={label} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderBottom: i < arr.length - 1 ? '1px solid rgba(15,52,96,0.06)' : 'none',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Icon size={14} style={{ color: '#64748b', flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, color: '#334155' }}>{label}</span>
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: '#16a34a' }}>{status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Legend */}
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Vessel Status</p>
+                <div style={{
+                  background: '#fff',
+                  border: '1px solid rgba(15,52,96,0.08)',
+                  borderRadius: 10,
+                  overflow: 'hidden',
+                  boxShadow: '0 1px 2px rgba(15,52,96,0.04)',
+                }}>
+                  {(Object.entries(STATUS_THEME) as [Ship['status'], typeof STATUS_THEME[Ship['status']]][]).map(([key, t], i, arr) => (
+                    <div key={key} style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '9px 14px',
+                      borderBottom: i < arr.length - 1 ? '1px solid rgba(15,52,96,0.06)' : 'none',
+                    }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.dot, flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, color: '#334155' }}>{t.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* CENTRE — Globe */}
+          <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent' }}>
+            <div ref={mountRef} style={{ width: '100%', height: '100%', touchAction: 'none' }} />
+
+            {/* Corner labels */}
+            {[
+              { pos: { top: 14, left: 14 },  lines: ['GLOBAL', 'LIVE FEED'] },
+              { pos: { top: 14, right: 14 },  lines: ['WGS-84', 'ORTHOGRAPHIC'] },
+              { pos: { bottom: 14, left: 14 }, lines: [`${SHIPS.length} CONTACTS`, 'AIS TRACK'] },
+              { pos: { bottom: 14, right: 14 },lines: ['DRAG · ROTATE', 'SCROLL · ZOOM'] },
+            ].map(({ pos, lines }, i) => (
+              <div key={i} style={{
+                position: 'absolute', ...pos,
+                pointerEvents: 'none',
+                textAlign: i % 2 === 1 ? 'right' : 'left',
+              }}>
+                {lines.map(l => (
+                  <div key={l} style={{ fontSize: 10, letterSpacing: '0.08em', color: 'rgba(148,163,184,0.7)', lineHeight: 1.6 }}>{l}</div>
+                ))}
+              </div>
+            ))}
+
+            {/* Hover tooltip */}
+            {hoveredShipData && (
+              <div style={{
+                position: 'absolute', top: '50%', left: 20, transform: 'translateY(-50%)',
+                background: '#fff',
+                border: '1px solid rgba(15,52,96,0.12)',
+                borderRadius: 10,
+                boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                padding: '10px 14px',
+                pointerEvents: 'none',
+                animation: 'sm-fadein 0.15s ease',
+                minWidth: 160,
+              }}>
+                <div style={{ fontSize: 10, color: '#64748b', marginBottom: 2, letterSpacing: '0.04em' }}>{hoveredShipData.id}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#0a2540', marginBottom: 4 }}>{hoveredShipData.name}</div>
+                <div style={{ fontSize: 11, color: '#475569', marginBottom: 8 }}>{hoveredShipData.type}</div>
+                <StatusPill status={hoveredShipData.status} />
+                <div style={{ fontSize: 10, color: '#2e7cc4', marginTop: 8, fontWeight: 500 }}>Click to inspect →</div>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT — Active vessels */}
+          <aside style={{
+            background: '#fff',
+            borderLeft: '1px solid rgba(15,52,96,0.08)',
+            display: 'flex', flexDirection: 'column',
+            overflow: 'hidden',
+          }}>
+            <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(15,52,96,0.06)', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <IconShip size={15} style={{ color: '#2e7cc4' }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#0a2540' }}>Active Vessels</span>
+                <span style={{
+                  marginLeft: 'auto', fontSize: 11, fontWeight: 500,
+                  background: '#eff6ff', color: '#1d4ed8',
+                  padding: '1px 7px', borderRadius: 20,
+                }}>{SHIPS.length}</span>
+              </div>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>
+              {SHIPS.map(ship => {
+                const t = STATUS_THEME[ship.status];
+                const isHovered = hoveredShip === ship.id;
+                return (
+                  <div
+                    key={ship.id}
+                    className="sm-ship-item"
+                    onClick={() => setSelectedShip(ship)}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      border: `1px solid ${isHovered ? '#bfdbfe' : 'rgba(15,52,96,0.08)'}`,
+                      background: isHovered ? '#eff6ff' : '#fff',
+                      marginBottom: 6,
+                      cursor: 'pointer',
+                      transition: 'background 0.12s, border-color 0.12s',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 10, color: '#94a3b8', letterSpacing: '0.04em' }}>{ship.id}</span>
+                      <StatusPill status={ship.status} />
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0a2540' }}>{ship.name}</div>
+                    <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>{ship.type} · {ship.flag}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      {/* ── Ship Detail Modal ── */}
+      {selectedShip && (
+        <div
+          onClick={() => setSelectedShip(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(10, 37, 64, 0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 24,
+            animation: 'sm-fadein 0.2s ease',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#fff',
+              border: '1px solid rgba(15,52,96,0.10)',
+              borderRadius: 16,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
+              width: '100%', maxWidth: 900, maxHeight: '90vh',
+              overflow: 'hidden', display: 'flex', flexDirection: 'column',
+              animation: 'sm-slideup 0.25s ease',
+            }}
+          >
+            {/* Modal header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid rgba(15,52,96,0.08)',
+              display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+              flexShrink: 0,
+            }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4, letterSpacing: '0.04em' }}>{selectedShip.id}</div>
+                <h2 style={{ fontSize: 22, fontWeight: 700, color: '#0a2540', margin: 0, lineHeight: 1.2 }}>{selectedShip.name}</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                  <span style={{ fontSize: 12, color: '#475569' }}>{selectedShip.type}</span>
+                  <span style={{ color: '#cbd5e1' }}>·</span>
+                  <span style={{ fontSize: 12, color: '#475569' }}>Flag: {selectedShip.flag}</span>
+                  <span style={{ color: '#cbd5e1' }}>·</span>
+                  <StatusPill status={selectedShip.status} />
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedShip(null)}
+                style={{
+                  background: 'none', border: '1px solid rgba(15,52,96,0.12)',
+                  borderRadius: 8, cursor: 'pointer', padding: 6,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#64748b', transition: 'background 0.12s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+              >
+                <IconX size={16} />
               </button>
             </div>
 
-            <div className="sm-modal-body">
-              <div className="sm-vessel-stats">
-                <div className="sm-vessel-stat">
-                  <div className="icon"><Navigation size={13} /></div>
-                  <div className="label">SPEED</div>
-                  <div className="value">{selectedShip.speed} <span style={{ fontSize: '10px', color: '#64748b' }}>KTS</span></div>
-                </div>
-                <div className="sm-vessel-stat">
-                  <div className="icon"><Wind size={13} /></div>
-                  <div className="label">HEADING</div>
-                  <div className="value">{String(selectedShip.heading).padStart(3, '0')}°</div>
-                </div>
-                <div className="sm-vessel-stat">
-                  <div className="icon"><MapPin size={13} /></div>
-                  <div className="label">DESTINATION</div>
-                  <div className="value" style={{ fontSize: '13px' }}>{selectedShip.destination}</div>
-                </div>
-                <div className="sm-vessel-stat">
-                  <div className="icon"><Calendar size={13} /></div>
-                  <div className="label">ETA</div>
-                  <div className="value" style={{ fontSize: '11px' }}>{selectedShip.eta}</div>
-                </div>
-              </div>
+            {/* Modal body */}
+            <div style={{ overflowY: 'auto', flex: 1, padding: '20px 24px 24px' }}>
 
-              <div className="sm-vessel-stats" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '28px' }}>
-                <div className="sm-vessel-stat">
-                  <div className="icon"><Globe2 size={13} /></div>
-                  <div className="label">COORDINATES</div>
-                  <div className="value" style={{ fontSize: '13px' }}>
-                    {Math.abs(selectedShip.lat).toFixed(2)}°{selectedShip.lat >= 0 ? 'N' : 'S'} ·{' '}
-                    {Math.abs(selectedShip.lon).toFixed(2)}°{selectedShip.lon >= 0 ? 'E' : 'W'}
-                  </div>
-                </div>
-                <div className="sm-vessel-stat">
-                  <div className="icon"><Briefcase size={13} /></div>
-                  <div className="label">CARGO MANIFEST</div>
-                  <div className="value" style={{ fontSize: '13px' }}>{selectedShip.cargo}</div>
-                </div>
-              </div>
-
-              <div className="sm-section-heading">
-                <Users size={15} />
-                <span>CREW ROSTER</span>
-                <span className="line" />
-                <span className="count">{selectedShip.crew.length} PERSONNEL</span>
-              </div>
-
-              <div className="sm-crew-grid">
-                {selectedShip.crew.map((member, idx) => (
-                  <div key={idx} className="sm-crew-card">
-                    <div className="sm-crew-header">
-                      <div className="sm-crew-avatar">
-                        {member.name
-                          .split(' ')
-                          .filter(p => !p.includes('.') && !['Captain', 'Dr.'].includes(p))
-                          .slice(0, 2)
-                          .map(p => p[0])
-                          .join('')}
-                      </div>
-                      <div className="sm-crew-info">
-                        <div className="sm-crew-name">{member.name}</div>
-                        <div className="sm-crew-role">{member.role}</div>
-                      </div>
+              {/* Voyage stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 20 }}>
+                {[
+                  { icon: IconNavigation, label: 'Speed',       value: `${selectedShip.speed} kts` },
+                  { icon: IconWind,       label: 'Heading',     value: `${String(selectedShip.heading).padStart(3,'0')}°` },
+                  { icon: IconMapPin,     label: 'Destination', value: selectedShip.destination },
+                  { icon: IconCalendar,   label: 'ETA',         value: selectedShip.eta },
+                ].map(({ icon: Icon, label, value }) => (
+                  <div key={label} style={{
+                    background: '#f8fafc', border: '1px solid rgba(15,52,96,0.08)',
+                    borderRadius: 10, padding: '12px 14px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                      <Icon size={13} style={{ color: '#2e7cc4' }} />
+                      <span style={{ fontSize: 10, color: '#64748b', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
                     </div>
-                    <div className="sm-crew-details">
-                      <div className="sm-crew-detail"><span className="key">NATION</span><span className="val">{member.nationality}</span></div>
-                      <div className="sm-crew-detail"><span className="key">AGE</span><span className="val">{member.age}</span></div>
-                      <div className="sm-crew-detail"><span className="key">EXP</span><span className="val">{member.exp}</span></div>
-                      <div className="sm-crew-detail"><span className="key">CONTACT</span><span className="val">{member.contact}</span></div>
-                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#0a2540' }}>{value}</div>
                   </div>
                 ))}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
+                {[
+                  { icon: IconGlobe,    label: 'Coordinates',   value: `${Math.abs(selectedShip.lat).toFixed(2)}° ${selectedShip.lat>=0?'N':'S'} · ${Math.abs(selectedShip.lon).toFixed(2)}° ${selectedShip.lon>=0?'E':'W'}` },
+                  { icon: IconBriefcase,label: 'Cargo Manifest', value: selectedShip.cargo },
+                ].map(({ icon: Icon, label, value }) => (
+                  <div key={label} style={{
+                    background: '#f8fafc', border: '1px solid rgba(15,52,96,0.08)',
+                    borderRadius: 10, padding: '12px 14px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                      <Icon size={13} style={{ color: '#2e7cc4' }} />
+                      <span style={{ fontSize: 10, color: '#64748b', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#0a2540' }}>{value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Crew roster */}
+              <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <IconUsers size={15} style={{ color: '#2e7cc4' }} />
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: '#0a2540', margin: 0 }}>Crew Roster</h3>
+                <span style={{
+                  fontSize: 11, fontWeight: 500,
+                  background: '#eff6ff', color: '#1d4ed8',
+                  padding: '1px 7px', borderRadius: 20,
+                }}>{selectedShip.crew.length} personnel</span>
+                <div style={{ flex: 1, height: 1, background: 'rgba(15,52,96,0.08)' }} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10 }}>
+                {selectedShip.crew.map((member, idx) => {
+                  const initials = member.name
+                    .split(' ')
+                    .filter(p => !['Captain', 'Dr.'].includes(p) && !p.includes('.'))
+                    .slice(0, 2)
+                    .map(p => p[0])
+                    .join('');
+                  return (
+                    <div
+                      key={idx}
+                      className="sm-crew-card"
+                      style={{
+                        background: '#fff',
+                        border: '1px solid rgba(15,52,96,0.08)',
+                        borderRadius: 10,
+                        padding: 14,
+                        transition: 'background 0.12s',
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                          background: 'linear-gradient(135deg, #144272 0%, #2e7cc4 100%)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 13, fontWeight: 600, color: '#fff',
+                        }}>{initials}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#0a2540', lineHeight: 1.3 }}>{member.name}</div>
+                          <div style={{ fontSize: 11, color: '#2e7cc4', marginTop: 2, fontWeight: 500 }}>{member.role}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {[
+                          ['Nationality', member.nationality],
+                          ['Age',         String(member.age)],
+                          ['Experience',  member.exp],
+                          ['Contact',     member.contact],
+                        ].map(([k, v]) => (
+                          <div key={k} style={{ display: 'flex', gap: 6, fontSize: 11 }}>
+                            <span style={{ color: '#94a3b8', minWidth: 72, flexShrink: 0 }}>{k}</span>
+                            <span style={{ color: '#334155', wordBreak: 'break-all' }}>{v}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
