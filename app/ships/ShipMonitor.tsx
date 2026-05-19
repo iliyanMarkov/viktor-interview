@@ -556,7 +556,7 @@ export default function ShipMonitor() {
         {/* Left toggle */}
         <button
           className="sm-toggle-btn"
-          onClick={() => setLeftOpen(v => !v)}
+          onClick={() => {setLeftOpen(v => !v); setRightOpen(false) }}
           style={{
             position: 'absolute', top: 16, left: leftOpen ? 272 : 16,
             transition: 'left 0.25s ease',
@@ -578,7 +578,7 @@ export default function ShipMonitor() {
         {/* Right toggle */}
         <button
           className="sm-toggle-btn"
-          onClick={() => setRightOpen(v => !v)}
+          onClick={() => {setRightOpen(v => !v); setLeftOpen(false) }}
           style={{
             position: 'absolute', top: 16, right: rightOpen ? 312 : 16,
             transition: 'right 0.25s ease',
