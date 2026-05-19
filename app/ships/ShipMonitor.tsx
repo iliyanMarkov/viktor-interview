@@ -897,7 +897,7 @@ export default function ShipMonitor() {
             <div style={{ overflowY: 'auto', flex: 1, padding: '20px 24px 24px' }}>
 
               {/* Voyage stats */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 20 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20, justifyContent: 'space-between' }}>
                 {[
                   { icon: IconNavigation, label: 'Speed',       value: `${selectedShip.speed} kts` },
                   { icon: IconWind,       label: 'Heading',     value: `${String(selectedShip.heading).padStart(3,'0')}°` },
@@ -907,6 +907,7 @@ export default function ShipMonitor() {
                   <div key={label} style={{
                     background: '#f8fafc', border: '1px solid rgba(15,52,96,0.08)',
                     borderRadius: 10, padding: '12px 14px',
+                    flex: 1,
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                       <Icon size={13} style={{ color: '#2e7cc4' }} />
@@ -917,7 +918,7 @@ export default function ShipMonitor() {
                 ))}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 24, justifyContent: 'space-between' }}>
                 {[
                   { icon: IconGlobe,    label: 'Coordinates',   value: `${Math.abs(selectedShip.lat).toFixed(2)}° ${selectedShip.lat>=0?'N':'S'} · ${Math.abs(selectedShip.lon).toFixed(2)}° ${selectedShip.lon>=0?'E':'W'}` },
                   { icon: IconBriefcase,label: 'Cargo Manifest', value: selectedShip.cargo },
@@ -925,6 +926,7 @@ export default function ShipMonitor() {
                   <div key={label} style={{
                     background: '#f8fafc', border: '1px solid rgba(15,52,96,0.08)',
                     borderRadius: 10, padding: '12px 14px',
+                    flex: 1,
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                       <Icon size={13} style={{ color: '#2e7cc4' }} />
@@ -947,7 +949,7 @@ export default function ShipMonitor() {
                 <div style={{ flex: 1, height: 1, background: 'rgba(15,52,96,0.08)' }} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' }}>
                 {selectedShip.crew.map((member, idx) => {
                   const initials = member.name
                     .split(' ')
@@ -965,6 +967,7 @@ export default function ShipMonitor() {
                         borderRadius: 10,
                         padding: 14,
                         transition: 'background 0.12s',
+                        flex: 1,
                       }}
                     >
                       <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
