@@ -251,6 +251,8 @@ export default function ShipMonitor() {
   const [selectedShip, setSelectedShip] = useState<Ship | null>(null);
   const [hoveredShip, setHoveredShip] = useState<string | null>(null);
   const [time, setTime] = useState<Date | null>(null);
+  const [leftOpen, setLeftOpen] = useState(false);
+  const [rightOpen, setRightOpen] = useState(false);
 
   useEffect(() => {
     setTime(new Date());
@@ -519,203 +521,216 @@ export default function ShipMonitor() {
       <style>{`
         .sm-ship-item:hover { background: #f8fafc !important; }
         .sm-crew-card:hover  { background: #f8fafc !important; }
+        .sm-toggle-btn:hover { color: #0a2540 !important; background: #fff !important; box-shadow: 0 2px 8px rgba(15,52,96,0.12) !important; }
         @keyframes sm-live { 0%,100%{opacity:1} 50%{opacity:0.3} }
         @keyframes sm-fadein { from{opacity:0} to{opacity:1} }
         @keyframes sm-slideup { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
       `}</style>
 
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#f1f5f9', overflow: 'hidden' }}>
+      {/* Globe fills the entire space; panels float on top */}
+      <div style={{ height: '100%', position: 'relative', overflow: 'hidden', background: '#f1f5f9' }}>
 
-        {/* ── Three-column body ── */}
-        <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '264px 1fr 296px' }}>
+        {/* Globe canvas */}
+        <div ref={mountRef} style={{ width: '100%', height: '100%', touchAction: 'none' }} />
 
-          {/* LEFT — Fleet overview */}
-          <aside style={{
-            background: '#fff',
-            borderRight: '1px solid rgba(15,52,96,0.08)',
-            display: 'flex', flexDirection: 'column',
-            overflow: 'hidden',
+   
+
+        {/* Hover tooltip */}
+        {hoveredShipData && (
+          <div style={{
+            position: 'absolute', top: '50%', left: leftOpen ? 280 : 16, transform: 'translateY(-50%)',
+            background: '#fff', border: '1px solid rgba(15,52,96,0.12)', borderRadius: 10,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: '10px 14px',
+            pointerEvents: 'none', animation: 'sm-fadein 0.15s ease', minWidth: 160,
+            transition: 'left 0.25s ease',
           }}>
-            <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontSize: 10, color: '#64748b', marginBottom: 2, letterSpacing: '0.04em' }}>{hoveredShipData.id}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#0a2540', marginBottom: 4 }}>{hoveredShipData.name}</div>
+            <div style={{ fontSize: 11, color: '#475569', marginBottom: 8 }}>{hoveredShipData.type}</div>
+            <StatusPill status={hoveredShipData.status} />
+            <div style={{ fontSize: 10, color: '#2e7cc4', marginTop: 8, fontWeight: 500 }}>Click to inspect →</div>
+          </div>
+        )}
 
-              {/* UTC + live badge */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 12, fontFamily: 'monospace', color: '#0a2540', fontWeight: 600 }}>{utcTime ?? '––:––:–– UTC'}</span>
+        {/* ── Toggle buttons ── */}
+        {/* Left toggle */}
+        <button
+          className="sm-toggle-btn"
+          onClick={() => setLeftOpen(v => !v)}
+          style={{
+            position: 'absolute', top: 16, left: leftOpen ? 272 : 16,
+            transition: 'left 0.25s ease',
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: leftOpen ? '#0a2540' : 'rgba(255,255,255,0.92)',
+            color: leftOpen ? '#fff' : '#0a2540',
+            border: '1px solid rgba(15,52,96,0.12)',
+            borderRadius: 8, padding: '7px 12px',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            boxShadow: '0 1px 4px rgba(15,52,96,0.10)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 20,
+          }}
+        >
+          <IconAnchor size={13} />
+          Fleet Overview
+        </button>
+
+        {/* Right toggle */}
+        <button
+          className="sm-toggle-btn"
+          onClick={() => setRightOpen(v => !v)}
+          style={{
+            position: 'absolute', top: 16, right: rightOpen ? 312 : 16,
+            transition: 'right 0.25s ease',
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: rightOpen ? '#0a2540' : 'rgba(255,255,255,0.92)',
+            color: rightOpen ? '#fff' : '#0a2540',
+            border: '1px solid rgba(15,52,96,0.12)',
+            borderRadius: 8, padding: '7px 12px',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            boxShadow: '0 1px 4px rgba(15,52,96,0.10)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 20,
+          }}
+        >
+          <IconShip size={13} />
+          Active Vessels
+        </button>
+
+        {/* ── LEFT panel — Fleet Overview ── */}
+        <aside style={{
+          position: 'absolute', top: 0, left: 0, bottom: 0,
+          width: 264,
+          transform: leftOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.25s ease',
+          background: 'rgba(255,255,255,0.96)',
+          borderRight: '1px solid rgba(15,52,96,0.10)',
+          boxShadow: '4px 0 20px rgba(15,52,96,0.08)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex', flexDirection: 'column',
+          zIndex: 10,
+        }}>
+          <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(15,52,96,0.06)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#0a2540' }}>Fleet Overview</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 12, fontFamily: 'monospace', color: '#64748b' }}>{utcTime ?? '––:––:––'}</span>
                 <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  fontSize: 11, fontWeight: 500,
-                  background: '#dcfce7', color: '#166534',
-                  padding: '2px 8px', borderRadius: 20,
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  fontSize: 11, fontWeight: 500, background: '#dcfce7', color: '#166534',
+                  padding: '2px 7px', borderRadius: 20,
                 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'sm-live 2s infinite' }} />
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'sm-live 2s infinite' }} />
                   Live
                 </span>
               </div>
-
-              {/* Fleet stats */}
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Fleet Overview</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <StatCard value={stats.total}    label="Vessels"  />
-                  <StatCard value={stats.underway}  label="Underway" color="#16a34a" />
-                  <StatCard value={stats.anchored}  label="Anchored" color="#d97706" />
-                  <StatCard value={stats.inPort}    label="In Port"  color="#2563eb" />
-                </div>
-                <div style={{ marginTop: 8 }}>
-                  <StatCard value={stats.totalCrew} label="Total crew aboard" />
-                </div>
-              </div>
-
-              {/* System status */}
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>System Status</p>
-                <div style={{
-                  background: '#fff',
-                  border: '1px solid rgba(15,52,96,0.08)',
-                  borderRadius: 10,
-                  overflow: 'hidden',
-                  boxShadow: '0 1px 2px rgba(15,52,96,0.04)',
-                }}>
-                  {[
-                    { icon: IconSatellite, label: 'Satellite', status: 'Online' },
-                    { icon: IconWifi,      label: 'AIS Uplink', status: 'Active' },
-                    { icon: IconCloudRain, label: 'Weather Feed', status: 'Synced' },
-                    { icon: IconLock,      label: 'Encryption', status: 'AES-256' },
-                  ].map(({ icon: Icon, label, status }, i, arr) => (
-                    <div key={label} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '10px 14px',
-                      borderBottom: i < arr.length - 1 ? '1px solid rgba(15,52,96,0.06)' : 'none',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Icon size={14} style={{ color: '#64748b', flexShrink: 0 }} />
-                        <span style={{ fontSize: 12, color: '#334155' }}>{label}</span>
-                      </div>
-                      <span style={{ fontSize: 11, fontWeight: 500, color: '#16a34a' }}>{status}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Legend */}
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Vessel Status</p>
-                <div style={{
-                  background: '#fff',
-                  border: '1px solid rgba(15,52,96,0.08)',
-                  borderRadius: 10,
-                  overflow: 'hidden',
-                  boxShadow: '0 1px 2px rgba(15,52,96,0.04)',
-                }}>
-                  {(Object.entries(STATUS_THEME) as [Ship['status'], typeof STATUS_THEME[Ship['status']]][]).map(([key, t], i, arr) => (
-                    <div key={key} style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '9px 14px',
-                      borderBottom: i < arr.length - 1 ? '1px solid rgba(15,52,96,0.06)' : 'none',
-                    }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.dot, flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, color: '#334155' }}>{t.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
-          </aside>
-
-          {/* CENTRE — Globe */}
-          <div style={{ position: 'relative', overflow: 'hidden', background: '#f1f5f9' }}>
-            <div ref={mountRef} style={{ width: '100%', height: '100%', touchAction: 'none' }} />
-
-            {/* Corner labels */}
-            {[
-              { pos: { top: 14, left: 14 },  lines: ['GLOBAL', 'LIVE FEED'] },
-              { pos: { top: 14, right: 14 },  lines: ['WGS-84', 'ORTHOGRAPHIC'] },
-              { pos: { bottom: 14, left: 14 }, lines: [`${SHIPS.length} CONTACTS`, 'AIS TRACK'] },
-              { pos: { bottom: 14, right: 14 },lines: ['DRAG · ROTATE', 'SCROLL · ZOOM'] },
-            ].map(({ pos, lines }, i) => (
-              <div key={i} style={{
-                position: 'absolute', ...pos,
-                pointerEvents: 'none',
-                textAlign: i % 2 === 1 ? 'right' : 'left',
-              }}>
-                {lines.map(l => (
-                  <div key={l} style={{ fontSize: 10, letterSpacing: '0.08em', color: 'rgba(71,85,105,0.6)', lineHeight: 1.6 }}>{l}</div>
-                ))}
-              </div>
-            ))}
-
-            {/* Hover tooltip */}
-            {hoveredShipData && (
-              <div style={{
-                position: 'absolute', top: '50%', left: 20, transform: 'translateY(-50%)',
-                background: '#fff',
-                border: '1px solid rgba(15,52,96,0.12)',
-                borderRadius: 10,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                padding: '10px 14px',
-                pointerEvents: 'none',
-                animation: 'sm-fadein 0.15s ease',
-                minWidth: 160,
-              }}>
-                <div style={{ fontSize: 10, color: '#64748b', marginBottom: 2, letterSpacing: '0.04em' }}>{hoveredShipData.id}</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#0a2540', marginBottom: 4 }}>{hoveredShipData.name}</div>
-                <div style={{ fontSize: 11, color: '#475569', marginBottom: 8 }}>{hoveredShipData.type}</div>
-                <StatusPill status={hoveredShipData.status} />
-                <div style={{ fontSize: 10, color: '#2e7cc4', marginTop: 8, fontWeight: 500 }}>Click to inspect →</div>
-              </div>
-            )}
           </div>
 
-          {/* RIGHT — Active vessels */}
-          <aside style={{
-            background: '#fff',
-            borderLeft: '1px solid rgba(15,52,96,0.08)',
-            display: 'flex', flexDirection: 'column',
-            overflow: 'hidden',
-          }}>
-            <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(15,52,96,0.06)', flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <IconShip size={15} style={{ color: '#2e7cc4' }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#0a2540' }}>Active Vessels</span>
-                <span style={{
-                  marginLeft: 'auto', fontSize: 11, fontWeight: 500,
-                  background: '#eff6ff', color: '#1d4ed8',
-                  padding: '1px 7px', borderRadius: 20,
-                }}>{SHIPS.length}</span>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <StatCard value={stats.total}    label="Vessels"  />
+              <StatCard value={stats.underway}  label="Underway" color="#16a34a" />
+              <StatCard value={stats.anchored}  label="Anchored" color="#d97706" />
+              <StatCard value={stats.inPort}    label="In Port"  color="#2563eb" />
+            </div>
+            <StatCard value={stats.totalCrew} label="Total crew aboard" />
+
+            {/* System status */}
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>System Status</p>
+              <div style={{ background: '#fff', border: '1px solid rgba(15,52,96,0.08)', borderRadius: 10, overflow: 'hidden', boxShadow: '0 1px 2px rgba(15,52,96,0.04)' }}>
+                {[
+                  { icon: IconSatellite, label: 'Satellite',    status: 'Online'  },
+                  { icon: IconWifi,      label: 'AIS Uplink',   status: 'Active'  },
+                  { icon: IconCloudRain, label: 'Weather Feed', status: 'Synced'  },
+                  { icon: IconLock,      label: 'Encryption',   status: 'AES-256' },
+                ].map(({ icon: Icon, label, status }, i, arr) => (
+                  <div key={label} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '9px 13px',
+                    borderBottom: i < arr.length - 1 ? '1px solid rgba(15,52,96,0.06)' : 'none',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <Icon size={13} style={{ color: '#64748b' }} />
+                      <span style={{ fontSize: 12, color: '#334155' }}>{label}</span>
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 500, color: '#16a34a' }}>{status}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>
-              {SHIPS.map(ship => {
-                const t = STATUS_THEME[ship.status];
-                const isHovered = hoveredShip === ship.id;
-                return (
-                  <div
-                    key={ship.id}
-                    className="sm-ship-item"
-                    onClick={() => setSelectedShip(ship)}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: `1px solid ${isHovered ? '#bfdbfe' : 'rgba(15,52,96,0.08)'}`,
-                      background: isHovered ? '#eff6ff' : '#fff',
-                      marginBottom: 6,
-                      cursor: 'pointer',
-                      transition: 'background 0.12s, border-color 0.12s',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 10, color: '#94a3b8', letterSpacing: '0.04em' }}>{ship.id}</span>
-                      <StatusPill status={ship.status} />
-                    </div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0a2540' }}>{ship.name}</div>
-                    <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>{ship.type} · {ship.flag}</div>
+            {/* Legend */}
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Vessel Status</p>
+              <div style={{ background: '#fff', border: '1px solid rgba(15,52,96,0.08)', borderRadius: 10, overflow: 'hidden', boxShadow: '0 1px 2px rgba(15,52,96,0.04)' }}>
+                {(Object.entries(STATUS_THEME) as [Ship['status'], typeof STATUS_THEME[Ship['status']]][]).map(([key, t], i, arr) => (
+                  <div key={key} style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px',
+                    borderBottom: i < arr.length - 1 ? '1px solid rgba(15,52,96,0.06)' : 'none',
+                  }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.dot, flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: '#334155' }}>{t.label}</span>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </aside>
-        </div>
+          </div>
+        </aside>
+
+        {/* ── RIGHT panel — Active Vessels ── */}
+        <aside style={{
+          position: 'absolute', top: 0, right: 0, bottom: 0,
+          width: 296,
+          transform: rightOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.25s ease',
+          background: 'rgba(255,255,255,0.96)',
+          borderLeft: '1px solid rgba(15,52,96,0.10)',
+          boxShadow: '-4px 0 20px rgba(15,52,96,0.08)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex', flexDirection: 'column',
+          zIndex: 10,
+        }}>
+          <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(15,52,96,0.06)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <IconShip size={15} style={{ color: '#2e7cc4' }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#0a2540' }}>Active Vessels</span>
+              <span style={{
+                marginLeft: 'auto', fontSize: 11, fontWeight: 500,
+                background: '#eff6ff', color: '#1d4ed8',
+                padding: '1px 7px', borderRadius: 20,
+              }}>{SHIPS.length}</span>
+            </div>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>
+            {SHIPS.map(ship => {
+              const isHovered = hoveredShip === ship.id;
+              return (
+                <div
+                  key={ship.id}
+                  className="sm-ship-item"
+                  onClick={() => setSelectedShip(ship)}
+                  style={{
+                    padding: '10px 12px', borderRadius: 8,
+                    border: `1px solid ${isHovered ? '#bfdbfe' : 'rgba(15,52,96,0.08)'}`,
+                    background: isHovered ? '#eff6ff' : '#fff',
+                    marginBottom: 6, cursor: 'pointer',
+                    transition: 'background 0.12s, border-color 0.12s',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 10, color: '#94a3b8', letterSpacing: '0.04em' }}>{ship.id}</span>
+                    <StatusPill status={ship.status} />
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0a2540' }}>{ship.name}</div>
+                  <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>{ship.type} · {ship.flag}</div>
+                </div>
+              );
+            })}
+          </div>
+        </aside>
       </div>
 
       {/* ── Ship Detail Modal ── */}
