@@ -78,21 +78,6 @@ export default function SeafarersList() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 24, boxSizing: "border-box" }}>
       <div style={{ maxWidth: 1200, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5 flex-shrink-0 flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <IconUsers size={24} className="text-[#144272]" />
-            <div>
-              <h1 className="text-xl font-semibold text-[#0a2540]">Seafarers</h1>
-              <p className="text-sm text-[#475569]">{SEAFARERS.length} crew members</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[rgba(15,52,96,0.1)] text-[#475569] text-sm">
-            <IconSearch size={15} />
-            <span>Search seafarers…</span>
-          </div>
-        </div>
-
         {/* Scrollable table wrapper — fills remaining height */}
         <div
           className="bg-white rounded-2xl border border-[rgba(15,52,96,0.1)] shadow-sm"
