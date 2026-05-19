@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import AppLoader from "@/components/AppLoader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body
+        suppressHydrationWarning
         className="h-full"
         style={{
           display: "flex",
@@ -31,6 +33,7 @@ export default function RootLayout({
           margin: 0,
         }}
       >
+        <AppLoader />
         <Sidebar />
         <div
           style={{
