@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Chart as ChartJS,
@@ -32,6 +32,7 @@ import {
   IconFileImport,
   IconMail,
   IconTrendingUp,
+  IconChevronDown,
 } from "@tabler/icons-react";
 import {
   type Seafarer,
@@ -89,8 +90,20 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
   const [activeTab, setActiveTab] = useState("Personal");
   const [activeKeys, setActiveKeys] = useState<Set<SeriesKey>>(new Set(["performance"]));
   const [reminderOn, setReminderOn] = useState(true);
+  const [tabsOpen, setTabsOpen] = useState(false);
   const chartRef = useRef<ChartJS<"line"> | null>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
   const pill = STATUS_PILL[seafarer.status];
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (tabsRef.current && !tabsRef.current.contains(e.target as Node)) {
+        setTabsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   function toggleSeries(key: SeriesKey) {
     setActiveKeys((prev) => {
@@ -150,7 +163,7 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>
 
         {/* Header strip */}
-        <div style={{ display:"flex", alignItems:"center", gap:16, padding:"20px 22px", background:"linear-gradient(135deg,#0f3460 0%,#1e5a96 100%)", borderRadius:12, marginBottom:14, color:"#fff", boxShadow:"0 2px 8px rgba(15,52,96,0.12)", position:"relative", overflow:"hidden" }}>
+        <div className="max-[500px]:flex-col max-[500px]:items-start" style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:16, padding:"20px 22px", background:"linear-gradient(135deg,#0f3460 0%,#1e5a96 100%)", borderRadius:12, marginBottom:14, color:"#fff", boxShadow:"0 2px 8px rgba(15,52,96,0.12)", position:"relative" }}>
           <div style={{ position:"relative" }}>
             <div style={{ width:60, height:60, borderRadius:"50%", background:"rgba(255,255,255,0.15)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:19, fontWeight:500, border:"1px solid rgba(255,255,255,0.2)" }}>
               {initials}
@@ -238,21 +251,85 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
         </div>
 
         {/* Tab card */}
-        <div style={{ background:"#fff", border:"0.5px solid rgba(15,52,96,0.1)", borderRadius:12, boxShadow:"0 1px 2px rgba(15,52,96,0.04)", overflow:"hidden" }}>
-          <div style={{ height:3, background:"linear-gradient(90deg,#144272 0%,#2e7cc4 50%,#0891b2 100%)" }} />
-          <div style={{ display:"flex", gap:4, padding:"0 16px", borderBottom:"0.5px solid rgba(15,52,96,0.08)", overflowX:"auto", background:"#f8fafc" }}>
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab;
-              const isEmergency = tab === "Emergencies";
-              return (
-                <button key={tab} onClick={() => setActiveTab(tab)} style={{ display: "flex", alignItems: "center", padding:"12px 4px", fontSize:13, color: isActive ? "#144272" : isEmergency ? "#92400e" : "#475569", cursor:"pointer", whiteSpace:"nowrap", background:"none", border:"none", borderBottom: isActive ? "2px solid #1e5a96" : "2px solid transparent", fontFamily:"inherit", fontWeight: isActive ? 500 : 400, transition:"color 0.15s,border-color 0.15s" }}>
-                  {isEmergency && <IconAlertTriangle size={13} style={{ verticalAlign:-2, marginRight:4, color:"#92400e" }} />}
-                  {tab}
-                </button>
-              );
-            })}
-          </div>
+        <div style={{ background:"#fff", border:"0.5px solid rgba(15,52,96,0.1)", borderRadius:12, boxShadow:"0 1px 2px rgba(15,52,96,0.04)", overflow:"visible" }}>
+         
           <div style={{ padding:20 }}>
+          <div style={{ overflow:"visible", display:"flex", justifyContent:"flex-end", marginBottom:10 }}>
+            <div ref={tabsRef} style={{ position:"relative", display:"inline-block", overflow:"visible" }}>
+              <button
+                onClick={() => setTabsOpen((v) => !v)}
+                style={{
+                  display:"inline-flex", alignItems:"center", gap:8,
+                  padding:"7px 12px", borderRadius:8,
+                  border:`1px solid ${tabsOpen ? "#bfdbfe" : "rgba(15,52,96,0.15)"}`,
+                  background: tabsOpen ? "#eff6ff" : "#fff",
+                  fontSize:13, fontWeight:500,
+                  color: activeTab === "Emergencies" ? "#92400e" : "#0a2540",
+                  cursor:"pointer", fontFamily:"inherit",
+                  transition:"background 0.15s, border-color 0.15s",
+                  boxShadow:"0 1px 2px rgba(15,52,96,0.06)",
+                }}
+              >
+                {activeTab === "Emergencies" && (
+                  <IconAlertTriangle size={13} style={{ color:"#92400e", flexShrink:0 }} />
+                )}
+                {activeTab}
+                <IconChevronDown
+                  size={13}
+                  style={{
+                    color:"#94a3b8", flexShrink:0,
+                    transform: tabsOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transition:"transform 0.15s",
+                  }}
+                />
+              </button>
+
+              {tabsOpen && (
+                <div style={{
+                  position:"absolute", top:"calc(100% + 4px)", right:0,
+                  minWidth:200, background:"#fff",
+                  border:"1px solid #e2e8f0", borderRadius:10,
+                  boxShadow:"0 8px 24px rgba(0,0,0,0.09)",
+                  padding:"4px 0", zIndex:30,
+                }}>
+                  {TABS.map((tab) => {
+                    const isActive = activeTab === tab;
+                    const isEmergency = tab === "Emergencies";
+                    return (
+                      <button
+                        key={tab}
+                        onClick={() => { setActiveTab(tab); setTabsOpen(false); }}
+                        style={{
+                          display:"flex", alignItems:"center", gap:8,
+                          width:"100%", padding:"8px 14px",
+                          background: isActive ? "#eff6ff" : "transparent",
+                          border:"none", textAlign:"left",
+                          fontSize:13, fontFamily:"inherit",
+                          fontWeight: isActive ? 500 : 400,
+                          color: isActive ? "#144272" : isEmergency ? "#92400e" : "#334155",
+                          cursor:"pointer", transition:"background 0.1s",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isActive) (e.currentTarget as HTMLElement).style.background = "#f8fafc";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
+                        }}
+                      >
+                        {isEmergency && (
+                          <IconAlertTriangle size={13} style={{ color:"#92400e", flexShrink:0 }} />
+                        )}
+                        {tab}
+                        {isActive && (
+                          <span style={{ marginLeft:"auto", width:6, height:6, borderRadius:"50%", background:"#1e5a96", flexShrink:0 }} />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
             {activeTab === "Personal"
               ? <PersonalTab seafarer={seafarer} reminderOn={reminderOn} setReminderOn={setReminderOn} />
               : <div style={{ padding:"40px 0", textAlign:"center", color:"#94a3b8", fontSize:14 }}>{activeTab} tab — content coming soon</div>
@@ -333,27 +410,27 @@ function PersonalTab({ seafarer, reminderOn, setReminderOn }: { seafarer: Seafar
         </div>
       </InfoCard>
 
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:14 }}>
-        <InfoCard>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:14 }}>
+        <InfoCard style={{ flex:1 }}>
           <h2 style={{ fontSize:13, fontWeight:500, margin:"0 0 12px", paddingBottom:10, borderBottom:"0.5px solid rgba(15,52,96,0.1)", color:"#144272" }}>
             <IconUserCheck size={14} style={{ verticalAlign:-2, marginRight:6 }} />Assigned agent
           </h2>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
             <div style={{ width:36, height:36, borderRadius:"50%", background:"#eff6ff", color:"#144272", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:500 }}>
               {seafarer.agent.split(" ").map(w => w[0]).join("").slice(0,2)}
             </div>
-            <div style={{ flex:1 }}>
+            <div style={{ flex:1,}}>
               <p style={{ fontSize:13, fontWeight:500, margin:0, color:"#0f172a" }}>{seafarer.agent}</p>
               <p style={{ fontSize:12, color:"#475569", margin:0 }}>M2306872</p>
             </div>
             <StyledBtn icon={<IconMail size={13}/>} label="Contact" small />
           </div>
         </InfoCard>
-        <InfoCard>
+        <InfoCard style={{ flex:1 }}>
           <h2 style={{ fontSize:13, fontWeight:500, margin:"0 0 12px", paddingBottom:10, borderBottom:"0.5px solid rgba(15,52,96,0.1)", color:"#144272" }}>
             <IconBell size={14} style={{ verticalAlign:-2, marginRight:6 }} />Document reminders
           </h2>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", justifyContent:"space-between" }}>
             <div>
               <p style={{ fontSize:13, margin:0, color:"#0f172a" }}>Email reminders</p>
               <p style={{ fontSize:12, color:"#475569", margin:"2px 0 0" }}>Alert before document expiry</p>
