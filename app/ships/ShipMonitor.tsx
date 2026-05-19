@@ -478,20 +478,21 @@ export default function ShipMonitor() {
     };
     animate();
 
-    const handleResize = () => {
-      if (!mountRef.current) return;
-      const w = mountRef.current.clientWidth;
-      const h = mountRef.current.clientHeight;
+    const handleResize = (entries: ResizeObserverEntry[]) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width: w, height: h } = entry.contentRect;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
-    window.addEventListener('resize', handleResize);
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(mountRef.current);
     renderer.domElement.style.cursor = 'grab';
 
     return () => {
       cancelAnimationFrame(frameId);
-      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
       renderer.domElement.removeEventListener('pointermove', handlePointerMove);
       renderer.domElement.removeEventListener('pointerup', handlePointerUp);
