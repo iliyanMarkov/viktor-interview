@@ -174,9 +174,6 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
               {seafarer.currentVessel && <span><IconShip size={13} style={{ verticalAlign:-2, marginRight:4 }} />{seafarer.currentVessel}</span>}
             </div>
           </div>
-          <button onClick={() => router.push("/seafarers")} style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"7px 12px", borderRadius:8, border:"0.5px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.12)", fontSize:13, cursor:"pointer", color:"#fff", fontFamily:"inherit" }}>
-            <IconArrowLeft size={14} />Back
-          </button>
         </div>
 
         {/* Career timeline */}

@@ -11,13 +11,6 @@ export default function ShipsPage() {
         <h1 className="text-3xl font-semibold text-[#0a2540]">Ships</h1>
         <p className="text-[#475569]">Fleet management — coming soon</p>
       </div>
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[rgba(15,52,96,0.15)] text-[#0a2540] text-sm hover:bg-[#eff6ff] hover:border-[#1e5a96] transition-colors"
-      >
-        <IconArrowLeft size={15} />
-        Back to home
-      </Link>
     </div>
   );
 }
