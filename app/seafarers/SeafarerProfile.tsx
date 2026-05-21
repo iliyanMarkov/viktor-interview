@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -32,6 +32,7 @@ import {
   IconPlane,
   IconCash,
   IconChartLine,
+  IconChevronDown,
 } from "@tabler/icons-react";
 import {
   type Seafarer,
@@ -340,11 +341,28 @@ function HeroAvatar({ seafarer }: { seafarer: Seafarer }) {
 
 export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
   const [section, setSection] = useState<SectionKey>("overview");
+  const [sectionOpen, setSectionOpen] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const [activeKeys, setActiveKeys] = useState<Set<SeriesKey>>(
     new Set(["performance"]),
   );
   const [reminderOn, setReminderOn] = useState(true);
   const chartRef = useRef<ChartJS<"line"> | null>(null);
+
+  const activeSection = SECTIONS.find((s) => s.key === section) ?? SECTIONS[0];
+
+  useEffect(() => {
+    function onOutside(e: MouseEvent) {
+      if (
+        sectionRef.current &&
+        !sectionRef.current.contains(e.target as Node)
+      ) {
+        setSectionOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, []);
 
   function toggleSeries(key: SeriesKey) {
     setActiveKeys((prev) => {
@@ -473,51 +491,111 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
           <div
             style={{
               display: "flex",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: 16,
-              gap: 8,
+              gap: 16,
             }}
           >
-            <ActionBtn icon={<IconEdit size={15} />} label="Edit" />
-            <ActionBtn icon={<IconFileImport size={15} />} label="Sync" />
-          </div>
-
-          <nav
-            style={{
-              display: "flex",
-              gap: 4,
-              borderBottom: "1px solid rgba(15,52,96,0.08)",
-              marginBottom: 20,
-            }}
-          >
-            {SECTIONS.map((s) => {
-              const active = section === s.key;
-              return (
-                <button
-                  key={s.key}
-                  type="button"
-                  onClick={() => setSection(s.key)}
+            <div
+              ref={sectionRef}
+              style={{ position: "relative", marginBottom: 20 }}
+            >
+              <button
+                type="button"
+                onClick={() => setSectionOpen((v) => !v)}
+                aria-haspopup="listbox"
+                aria-expanded={sectionOpen}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #e2e8f0",
+                  background: sectionOpen ? "#eff6ff" : "#ffffff",
+                  color: "#0f3460",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  minWidth: 160,
+                  justifyContent: "space-between",
+                }}
+              >
+                {activeSection.label}
+                <IconChevronDown
+                  size={14}
                   style={{
-                    padding: "10px 14px",
-                    marginBottom: -1,
-                    background: "transparent",
-                    border: "none",
-                    borderBottom: `2px solid ${active ? "#2e7cc4" : "transparent"}`,
-                    color: active ? "#0f3460" : "#64748b",
-                    fontSize: 13,
-                    fontWeight: active ? 600 : 500,
-                    cursor: "pointer",
-                    transition: "color 0.15s, border-color 0.15s",
-                    whiteSpace: "nowrap",
-                    fontFamily: "inherit",
+                    color: "#64748b",
+                    transition: "transform 0.2s ease",
+                    transform: sectionOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  }}
+                />
+              </button>
+
+              {sectionOpen && (
+                <div
+                  role="listbox"
+                  aria-label="Profile section"
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 4px)",
+                    left: 0,
+                    minWidth: "100%",
+                    background: "#fff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 8,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                    padding: "4px 0",
+                    zIndex: 30,
                   }}
                 >
-                  {s.label}
-                </button>
-              );
-            })}
-          </nav>
+                  {SECTIONS.map((s) => {
+                    const active = section === s.key;
+                    return (
+                      <button
+                        key={s.key}
+                        type="button"
+                        role="option"
+                        aria-selected={active}
+                        onClick={() => {
+                          setSection(s.key);
+                          setSectionOpen(false);
+                        }}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          padding: "8px 14px",
+                          border: "none",
+                          background: active ? "#eff6ff" : "transparent",
+                          color: active ? "#0f3460" : "#0f172a",
+                          fontSize: 13,
+                          fontWeight: active ? 600 : 400,
+                          textAlign: "left",
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                marginBottom: 16,
+                gap: 8,
+              }}
+            >
+              <ActionBtn icon={<IconEdit size={15} />} label="Edit" />
+              <ActionBtn icon={<IconFileImport size={15} />} label="Sync" />
+            </div>
+          </div>
 
           <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
             {section === "overview" && <OverviewView seafarer={seafarer} />}
