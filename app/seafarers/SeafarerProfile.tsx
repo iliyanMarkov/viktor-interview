@@ -125,6 +125,8 @@ const SECTIONS = [
 ] as const;
 type SectionKey = (typeof SECTIONS)[number]["key"];
 
+const MOBILE_BP = 768;
+
 const cardStyle: React.CSSProperties = {
   background: "#ffffff",
   border: "1px solid rgba(15,52,96,0.08)",
@@ -138,9 +140,136 @@ function hexToRgba(hex: string, alpha: number) {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
 
-function HeroAvatar({ seafarer }: { seafarer: Seafarer }) {
+function HeroAvatar({
+  seafarer,
+  isMobile = false,
+}: {
+  seafarer: Seafarer;
+  isMobile?: boolean;
+}) {
   const [hovered, setHovered] = useState(false);
   const photo = seafarer.photo;
+  const showMeta = isMobile || hovered;
+
+  if (isMobile) {
+    return (
+      <div style={{ ...cardStyle, overflow: "hidden" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 14,
+            padding: 16,
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: "50%",
+              flexShrink: 0,
+              overflow: "hidden",
+              position: "relative",
+              background: photo
+                ? `url(${photo}) center / cover no-repeat`
+                : STATUS_GRADIENT[seafarer.status],
+            }}
+          >
+            {!photo && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: "#ffffff",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                {getInitials(seafarer)}
+              </div>
+            )}
+          </div>
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 8,
+                marginBottom: 4,
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    color: "#0f3460",
+                    fontWeight: 700,
+                    fontSize: 16,
+                    lineHeight: 1.2,
+                    marginBottom: 2,
+                  }}
+                >
+                  {seafarer.firstName} {seafarer.lastName}
+                </div>
+                <div style={{ color: "#64748b", fontSize: 13 }}>
+                  {seafarer.rank}
+                </div>
+              </div>
+              <StatusBadge status={seafarer.status} size="sm" />
+            </div>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 500,
+                color: "#94a3b8",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              ID: {seafarer.id}
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "12px 16px",
+            padding: "12px 16px 16px",
+            borderTop: "1px solid rgba(15,52,96,0.08)",
+          }}
+        >
+          <MetaItem
+            icon={<IconFlag size={14} />}
+            label="Nationality"
+            value={seafarer.nationality}
+          />
+          <MetaItem
+            icon={<IconShip size={14} />}
+            label="Vessel"
+            value={seafarer.currentVessel ?? "—"}
+          />
+          <MetaItem
+            icon={<IconUser size={14} />}
+            label="Age"
+            value={`${seafarer.age}`}
+          />
+          <MetaItem
+            icon={<IconTrendingUp size={14} />}
+            label="Promotions"
+            value={`${seafarer.promotions}`}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
@@ -284,7 +413,7 @@ function HeroAvatar({ seafarer }: { seafarer: Seafarer }) {
         <div
           style={{
             display: "grid",
-            gridTemplateRows: hovered ? "1fr" : "0fr",
+            gridTemplateRows: showMeta ? "1fr" : "0fr",
             transition: "grid-template-rows 0.35s ease-in-out",
           }}
         >
@@ -293,8 +422,8 @@ function HeroAvatar({ seafarer }: { seafarer: Seafarer }) {
               style={{
                 padding: "0px 16px 12px",
                 borderBottom: "1px solid rgba(255,255,255,0.12)",
-                transform: hovered ? "translateY(0)" : "translateY(100%)",
-                opacity: hovered ? 1 : 0,
+                transform: showMeta ? "translateY(0)" : "translateY(100%)",
+                opacity: showMeta ? 1 : 0,
                 transition:
                   "transform 0.35s ease-in-out, opacity 0.35s ease-in-out",
               }}
@@ -347,9 +476,19 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
     new Set(["performance"]),
   );
   const [reminderOn, setReminderOn] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const chartRef = useRef<ChartJS<"line"> | null>(null);
 
   const activeSection = SECTIONS.find((s) => s.key === section) ?? SECTIONS[0];
+
+  useEffect(() => {
+    function onResize() {
+      setIsMobile(window.innerWidth < MOBILE_BP);
+    }
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     function onOutside(e: MouseEvent) {
@@ -455,7 +594,7 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
       style={{
         flex: 1,
         height: "100%",
-        overflow: "hidden",
+        overflow: isMobile ? "auto" : "hidden",
         display: "flex",
         flexDirection: "column",
         padding: 24,
@@ -470,13 +609,24 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
           maxWidth: 1200,
           width: "100%",
           margin: "0 auto",
-          display: "grid",
-          gridTemplateColumns: "minmax(220px, 300px) 1fr",
+          display: isMobile ? "flex" : "grid",
+          flexWrap: isMobile ? "wrap" : undefined,
+          gridTemplateColumns: isMobile
+            ? undefined
+            : "minmax(220px, 300px) 1fr",
           gap: 20,
         }}
       >
         {/* Left: photo card */}
-        <HeroAvatar seafarer={seafarer} />
+        <div
+          style={
+            isMobile
+              ? { flex: "1 1 100%", minWidth: 0, width: "100%" }
+              : undefined
+          }
+        >
+          <HeroAvatar seafarer={seafarer} isMobile={isMobile} />
+        </div>
 
         {/* Right: details */}
         <main
@@ -486,6 +636,9 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
             flexDirection: "column",
             minHeight: 0,
             padding: "20px 24px",
+            ...(isMobile
+              ? { flex: "1 1 100%", minWidth: 0, width: "100%" }
+              : {}),
           }}
         >
           <div
@@ -494,12 +647,11 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
               justifyContent: "space-between",
               alignItems: "center",
               gap: 16,
+              flexWrap: "wrap-reverse",
+              marginBottom: 16,
             }}
           >
-            <div
-              ref={sectionRef}
-              style={{ position: "relative", marginBottom: 20 }}
-            >
+            <div ref={sectionRef} style={{ position: "relative" }}>
               <button
                 type="button"
                 onClick={() => setSectionOpen((v) => !v)}
@@ -588,7 +740,6 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
                 display: "flex",
                 justifyContent: "flex-end",
                 alignItems: "center",
-                marginBottom: 16,
                 gap: 8,
               }}
             >
@@ -619,6 +770,14 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
             )}
           </div>
         </main>
+        {isMobile && (
+          <div
+            style={{
+              height: 1,
+              width: "100%",
+            }}
+          ></div>
+        )}
       </div>
     </div>
   );
