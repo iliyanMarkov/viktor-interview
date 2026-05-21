@@ -2,20 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import {
-  type Seafarer,
-  type SeafarerStatus,
-  getInitials,
-} from "@/lib/seafarers";
+import { type Seafarer, STATUS_GRADIENT, getInitials } from "@/lib/seafarers";
 import StatusBadge from "@/components/StatusBadge";
-
-/* ── Status gradient (card background when no photo) ─── */
-const STATUS_GRADIENT: Record<SeafarerStatus, string> = {
-  Onboard: "linear-gradient(160deg, #0f3460 0%, #065f46 100%)",
-  Available: "linear-gradient(160deg, #0f3460 0%, #1d4ed8 100%)",
-  "On leave": "linear-gradient(160deg, #0f3460 0%, #92400e 100%)",
-  Training: "linear-gradient(160deg, #0f3460 0%, #5b21b6 100%)",
-};
 
 /* ── Responsive layout tiers ───────────────────────────── */
 type Layout = {

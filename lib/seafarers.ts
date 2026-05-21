@@ -1,5 +1,13 @@
 export type SeafarerStatus = "Onboard" | "Available" | "On leave" | "Training";
 
+/** Card background when no photo — shared by carousel and profile */
+export const STATUS_GRADIENT: Record<SeafarerStatus, string> = {
+  Onboard: "linear-gradient(160deg, #0f3460 0%, #065f46 100%)",
+  Available: "linear-gradient(160deg, #0f3460 0%, #1d4ed8 100%)",
+  "On leave": "linear-gradient(160deg, #0f3460 0%, #92400e 100%)",
+  Training: "linear-gradient(160deg, #0f3460 0%, #5b21b6 100%)",
+};
+
 export interface Seafarer {
   id: string;
   firstName: string;
