@@ -591,6 +591,7 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
 
   return (
     <div
+      className="seafarer-profile-bg"
       style={{
         flex: 1,
         height: "100%",
@@ -599,7 +600,6 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
         flexDirection: "column",
         padding: 24,
         boxSizing: "border-box",
-        background: "#f1f5f9",
       }}
     >
       <div
