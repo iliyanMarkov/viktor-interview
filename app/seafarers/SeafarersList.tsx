@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import {
   IconChevronUp,
   IconChevronDown,
   IconSelector,
 } from "@tabler/icons-react";
-import { SEAFARERS, type Seafarer } from "@/lib/seafarers";
+import { type Seafarer } from "@/lib/seafarers";
 import StatusBadge from "@/components/StatusBadge";
 
 
@@ -80,12 +80,36 @@ function renderCell(s: Seafarer, key: string) {
   }
 }
 
-export default function SeafarersList({ hiddenCols }: { hiddenCols: Set<string> }) {
+export default function SeafarersList({
+  seafarers,
+  hiddenCols,
+  hasMore = false,
+  onLoadMore,
+}: {
+  seafarers: Seafarer[];
+  hiddenCols: Set<string>;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+}) {
   const router = useRouter();
 
   const [colWidths, setColWidths] = useState<Record<string, number>>(
     Object.fromEntries(COLUMNS.map((c) => [c.key, c.defaultWidth]))
   );
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  /* Intersection observer — load more when sentinel enters the viewport */
+  useEffect(() => {
+    if (!hasMore || !onLoadMore) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) onLoadMore(); },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, onLoadMore]);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
@@ -93,7 +117,7 @@ export default function SeafarersList({ hiddenCols }: { hiddenCols: Set<string> 
 
   const visibleColumns = COLUMNS.filter((c) => !hiddenCols.has(c.key));
 
-  const sortedSeafarers = [...SEAFARERS].sort((a, b) => {
+  const sortedSeafarers = [...seafarers].sort((a, b) => {
     if (!sortKey) return 0;
     const va = getSortValue(a, sortKey);
     const vb = getSortValue(b, sortKey);
@@ -264,6 +288,36 @@ export default function SeafarersList({ hiddenCols }: { hiddenCols: Set<string> 
               })}
             </tbody>
           </table>
+
+          {/* Sentinel + load-more indicator */}
+          {hasMore && (
+            <div
+              ref={sentinelRef}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "16px 0",
+                color: "#94a3b8",
+                fontSize: 13,
+              }}
+            >
+              <span
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  border: "2px solid #e2e8f0",
+                  borderTopColor: "#2e7cc4",
+                  animation: "spin 0.7s linear infinite",
+                  display: "inline-block",
+                }}
+              />
+              Loading more…
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+          )}
         </div>
       </div>
     </div>

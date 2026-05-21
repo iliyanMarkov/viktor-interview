@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { SEAFARERS, type SeafarerStatus, getInitials } from "@/lib/seafarers";
+import { type Seafarer, type SeafarerStatus, getInitials } from "@/lib/seafarers";
 import StatusBadge from "@/components/StatusBadge";
 
 /* ── Status gradient (card background when no photo) ─── */
@@ -43,14 +43,21 @@ function getCardStyle(
 }
 
 /* ── Component ──────────────────────────────────────────── */
-export default function SeafarerCarousel({ hiddenCols }: { hiddenCols: Set<string> }) {
+interface Props {
+  seafarers: Seafarer[];
+  hiddenCols: Set<string>;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+}
+
+export default function SeafarerCarousel({ seafarers, hiddenCols, hasMore = false, onLoadMore }: Props) {
   const router = useRouter();
   const [current, setCurrent] = useState(0);
   const [infoOpacity, setInfoOpacity] = useState(1);
   const [windowWidth, setWindowWidth] = useState(1200);
   const animating = useRef(false);
   const touchStartX = useRef(0);
-  const total = SEAFARERS.length;
+  const total = seafarers.length;
 
   /* Track viewport width for responsive layout */
   useEffect(() => {
@@ -61,6 +68,40 @@ export default function SeafarerCarousel({ hiddenCols }: { hiddenCols: Set<strin
   }, []);
 
   const layout = getLayout(windowWidth);
+
+  /* Clamp current index when the list shrinks (page-size reduced) */
+  useEffect(() => {
+    if (total > 0 && current >= total) setCurrent(total - 1);
+  }, [total, current]);
+
+  /* Auto-load next page when the user reaches the last card */
+  useEffect(() => {
+    if (total > 0 && current === total - 1 && hasMore) onLoadMore?.();
+  }, [current, total, hasMore, onLoadMore]);
+
+  const [grabbing, setGrabbing] = useState(false);
+  const mouseDownX = useRef(0);
+  const dragMoved  = useRef(false);
+
+  function handleTrackMouseDown(e: React.MouseEvent) {
+    if (e.button !== 0) return;
+    mouseDownX.current = e.clientX;
+    dragMoved.current  = false;
+    setGrabbing(true);
+
+    function onMove(ev: MouseEvent) {
+      if (Math.abs(ev.clientX - mouseDownX.current) > 5) dragMoved.current = true;
+    }
+    function onUp(ev: MouseEvent) {
+      const diff = mouseDownX.current - ev.clientX;
+      if (Math.abs(diff) > 50) go(current + (diff > 0 ? 1 : -1));
+      setGrabbing(false);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    }
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
 
   const go = useCallback(
     (newIdx: number) => {
@@ -86,7 +127,7 @@ export default function SeafarerCarousel({ hiddenCols }: { hiddenCols: Set<strin
     return () => window.removeEventListener("keydown", onKey);
   }, [current, go]);
 
-  const seafarer = SEAFARERS[current];
+  const seafarer = seafarers[current] ?? seafarers[0];
 
   return (
     <div
@@ -160,14 +201,17 @@ export default function SeafarerCarousel({ hiddenCols }: { hiddenCols: Set<strin
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
+            cursor: grabbing ? "grabbing" : "grab",
+            userSelect: "none",
           }}
+          onMouseDown={handleTrackMouseDown}
           onTouchStart={(e) => { touchStartX.current = e.changedTouches[0].screenX; }}
           onTouchEnd={(e) => {
             const diff = touchStartX.current - e.changedTouches[0].screenX;
             if (Math.abs(diff) > 50) go(current + (diff > 0 ? 1 : -1));
           }}
         >
-          {SEAFARERS.map((s, i) => {
+          {seafarers.map((s, i) => {
             const offset = ((i - current) + total) % total;
             const cs = getCardStyle(offset, total, layout);
             const isCenter = offset === 0;
@@ -175,7 +219,10 @@ export default function SeafarerCarousel({ hiddenCols }: { hiddenCols: Set<strin
             return (
               <div
                 key={s.id}
-                onClick={() => isCenter ? router.push(`/seafarers?ids=${s.id}`) : go(i)}
+                onClick={() => {
+                  if (dragMoved.current) return;
+                  isCenter ? router.push(`/seafarers?ids=${s.id}`) : go(i);
+                }}
                 style={{
                   position: "absolute",
                   width: layout.cardW,
@@ -276,7 +323,7 @@ export default function SeafarerCarousel({ hiddenCols }: { hiddenCols: Set<strin
 
       {/* ── Dots ── */}
       <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 28 }}>
-        {SEAFARERS.map((_, i) => (
+        {seafarers.map((_, i) => (
           <button
             key={i}
             onClick={() => go(i)}
