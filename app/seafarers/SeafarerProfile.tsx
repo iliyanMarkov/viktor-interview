@@ -138,9 +138,12 @@ function hexToRgba(hex: string, alpha: number) {
 }
 
 function HeroAvatar({ seafarer }: { seafarer: Seafarer }) {
+  const [hovered, setHovered] = useState(false);
   const photo = seafarer.photo;
   return (
     <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         width: "100%",
         aspectRatio: "3 / 4",
@@ -233,8 +236,21 @@ function HeroAvatar({ seafarer }: { seafarer: Seafarer }) {
           {getInitials(seafarer)}
         </div>
       )}
-
-      <div style={{ position: "absolute", top: 12, right: 12 }}>
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 500,
+          color: "rgba(255,255,255,0.75)",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          position: "absolute",
+          top: 19,
+          left: 10,
+        }}
+      >
+        ID: {seafarer.id}
+      </div>
+      <div style={{ position: "absolute", top: 12, right: 10 }}>
         <StatusBadge status={seafarer.status} variant="dark" size="sm" />
       </div>
 
@@ -244,36 +260,78 @@ function HeroAvatar({ seafarer }: { seafarer: Seafarer }) {
           bottom: 0,
           left: 0,
           right: 0,
-          padding: "20px 16px 16px",
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)",
+            "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.45) 55%, transparent 100%)",
         }}
       >
-        <div
-          style={{
-            fontSize: 10,
-            fontWeight: 500,
-            color: "rgba(255,255,255,0.55)",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            marginBottom: 6,
-          }}
-        >
-          ID: {seafarer.id}
+        <div style={{ padding: "20px 16px 16px" }}>
+          <div
+            style={{
+              color: "#ffffff",
+              fontWeight: 700,
+              fontSize: "clamp(16px, 4vw, 20px)",
+              lineHeight: 1.2,
+              marginBottom: 4,
+            }}
+          >
+            {seafarer.firstName} {seafarer.lastName}
+          </div>
+          <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>
+            {seafarer.rank}
+          </div>
         </div>
         <div
           style={{
-            color: "#ffffff",
-            fontWeight: 700,
-            fontSize: "clamp(16px, 4vw, 20px)",
-            lineHeight: 1.2,
-            marginBottom: 4,
+            display: "grid",
+            gridTemplateRows: hovered ? "1fr" : "0fr",
+            transition: "grid-template-rows 0.35s ease-in-out",
           }}
         >
-          {seafarer.firstName} {seafarer.lastName}
-        </div>
-        <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>
-          {seafarer.rank}
+          <div style={{ overflow: "hidden" }}>
+            <div
+              style={{
+                padding: "0px 16px 12px",
+                borderBottom: "1px solid rgba(255,255,255,0.12)",
+                transform: hovered ? "translateY(0)" : "translateY(100%)",
+                opacity: hovered ? 1 : 0,
+                transition:
+                  "transform 0.35s ease-in-out, opacity 0.35s ease-in-out",
+              }}
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "12px 16px",
+                }}
+              >
+                <MetaItem
+                  variant="dark"
+                  icon={<IconFlag size={14} />}
+                  label="Nationality"
+                  value={seafarer.nationality}
+                />
+                <MetaItem
+                  variant="dark"
+                  icon={<IconShip size={14} />}
+                  label="Vessel"
+                  value={seafarer.currentVessel ?? "—"}
+                />
+                <MetaItem
+                  variant="dark"
+                  icon={<IconUser size={14} />}
+                  label="Age"
+                  value={`${seafarer.age}`}
+                />
+                <MetaItem
+                  variant="dark"
+                  icon={<IconTrendingUp size={14} />}
+                  label="Promotions"
+                  value={`${seafarer.promotions}`}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -415,44 +473,14 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
           <div
             style={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "flex-end",
               alignItems: "center",
               marginBottom: 16,
-              flexWrap: "wrap",
-              gap: 12,
+              gap: 8,
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                gap: "12px 20px",
-              }}
-            >
-              <MetaItem
-                icon={<IconFlag size={14} />}
-                label="Nationality"
-                value={seafarer.nationality}
-              />
-              <MetaItem
-                icon={<IconShip size={14} />}
-                label="Vessel"
-                value={seafarer.currentVessel ?? "—"}
-              />
-              <MetaItem
-                icon={<IconUser size={14} />}
-                label="Age"
-                value={`${seafarer.age}`}
-              />
-              <MetaItem
-                icon={<IconTrendingUp size={14} />}
-                label="Promotions"
-                value={`${seafarer.promotions}`}
-              />
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <ActionBtn icon={<IconEdit size={15} />} label="Edit" />
-              <ActionBtn icon={<IconFileImport size={15} />} label="Sync" />
-            </div>
+            <ActionBtn icon={<IconEdit size={15} />} label="Edit" />
+            <ActionBtn icon={<IconFileImport size={15} />} label="Sync" />
           </div>
 
           <nav
@@ -1018,11 +1046,14 @@ function MetaItem({
   icon,
   label,
   value,
+  variant = "light",
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
+  variant?: "light" | "dark";
 }) {
+  const isDark = variant === "dark";
   return (
     <div>
       <div
@@ -1030,7 +1061,7 @@ function MetaItem({
           display: "flex",
           alignItems: "center",
           gap: 5,
-          color: "#94a3b8",
+          color: isDark ? "rgba(255,255,255,0.55)" : "#94a3b8",
           fontSize: 10,
           fontWeight: 500,
           textTransform: "uppercase",
@@ -1041,7 +1072,13 @@ function MetaItem({
         {icon}
         {label}
       </div>
-      <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 500 }}>
+      <div
+        style={{
+          fontSize: 13,
+          color: isDark ? "#ffffff" : "#0f172a",
+          fontWeight: 500,
+        }}
+      >
         {value}
       </div>
     </div>
