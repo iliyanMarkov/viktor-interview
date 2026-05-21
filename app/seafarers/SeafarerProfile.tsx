@@ -36,11 +36,11 @@ import {
 } from "@tabler/icons-react";
 import {
   type Seafarer,
-  type SeafarerStatus,
   getInitials,
   MONTHS,
   SERIES_DATA,
 } from "@/lib/seafarers";
+import StatusBadge from "@/components/StatusBadge";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
@@ -72,12 +72,6 @@ const SERIES_META: Record<SeriesKey, {
 
 const TABS = ["Personal","Additional","Voyages","Experience","Certificates","Next of kin","Travel","Appraisals","Performance","Payroll","Emergencies"];
 
-const STATUS_PILL: Record<SeafarerStatus, { bg: string; textColor: string; dotColor: string }> = {
-  Onboard:    { bg: "rgba(34,197,94,0.2)",   textColor: "#86efac", dotColor: "#22c55e" },
-  Available:  { bg: "rgba(59,130,246,0.2)",  textColor: "#93c5fd", dotColor: "#3b82f6" },
-  "On leave": { bg: "rgba(251,191,36,0.2)",  textColor: "#fcd34d", dotColor: "#f59e0b" },
-  Training:   { bg: "rgba(167,139,250,0.2)", textColor: "#c4b5fd", dotColor: "#8b5cf6" },
-};
 
 function hexToRgba(hex: string, alpha: number) {
   const h = hex.replace("#", "");
@@ -93,8 +87,6 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
   const [tabsOpen, setTabsOpen] = useState(false);
   const chartRef = useRef<ChartJS<"line"> | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
-  const pill = STATUS_PILL[seafarer.status];
-
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (tabsRef.current && !tabsRef.current.contains(e.target as Node)) {
@@ -175,10 +167,7 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
               <h1 style={{ fontSize:20, fontWeight:500, margin:0, color:"#fff" }}>{seafarer.firstName} {seafarer.lastName}</h1>
-              <span style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"3px 10px", borderRadius:999, fontSize:12, fontWeight:500, background:pill.bg, color:pill.textColor, border:`1px solid ${hexToRgba(pill.dotColor,0.3)}` }}>
-                <span style={{ width:6, height:6, borderRadius:"50%", background:pill.dotColor }} />
-                {seafarer.status}
-              </span>
+              <StatusBadge status={seafarer.status} variant="dark" border />
             </div>
             <div style={{ display:"flex", gap:14, marginTop:6, fontSize:12, color:"rgba(255,255,255,0.85)", flexWrap:"wrap" }}>
               <span style={{ display:"flex", alignItems:"center", gap:4 }}><IconId size={13} style={{ verticalAlign:-2, marginRight:4 }} />{seafarer.id}</span>

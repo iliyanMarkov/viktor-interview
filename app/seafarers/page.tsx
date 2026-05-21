@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSeafarer } from "@/lib/seafarers";
-import SeafarersList from "./SeafarersList";
 import SeafarerProfile from "./SeafarerProfile";
+import SeafarersView from "./SeafarersView";
 
 export default async function SeafarersPage(props: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -16,5 +16,5 @@ export default async function SeafarersPage(props: {
     return <SeafarerProfile seafarer={seafarer} />;
   }
 
-  return <SeafarersList />;
+  return <SeafarersView />;
 }

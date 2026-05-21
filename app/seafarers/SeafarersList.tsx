@@ -1,30 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback } from "react";
 import {
-  IconColumns,
   IconChevronUp,
   IconChevronDown,
   IconSelector,
 } from "@tabler/icons-react";
-import { SEAFARERS, type Seafarer, type SeafarerStatus } from "@/lib/seafarers";
+import { SEAFARERS, type Seafarer } from "@/lib/seafarers";
+import StatusBadge from "@/components/StatusBadge";
 
-const STATUS_STYLES: Record<SeafarerStatus, { bg: string; text: string }> = {
-  Onboard:    { bg: "bg-green-100",  text: "text-green-800"  },
-  Available:  { bg: "bg-blue-100",   text: "text-blue-800"   },
-  "On leave": { bg: "bg-amber-100",  text: "text-amber-800"  },
-  Training:   { bg: "bg-purple-100", text: "text-purple-800" },
-};
 
-const STATUS_DOT: Record<SeafarerStatus, string> = {
-  Onboard:    "bg-green-500",
-  Available:  "bg-blue-500",
-  "On leave": "bg-amber-500",
-  Training:   "bg-purple-500",
-};
-
-const COLUMNS = [
+export const COLUMNS = [
   { key: "name",      label: "Seafarer",       defaultWidth: 200, alwaysVisible: true },
   { key: "id",        label: "ID",             defaultWidth: 100 },
   { key: "rank",      label: "Rank",           defaultWidth: 170 },
@@ -61,11 +48,7 @@ function getInitials(s: Seafarer) {
   return `${s.firstName[0]}${s.lastName[0]}`;
 }
 
-function renderCell(
-  s: Seafarer,
-  key: string,
-  statusStyle: { bg: string; text: string }
-) {
+function renderCell(s: Seafarer, key: string) {
   switch (key) {
     case "name":
       return (
@@ -85,12 +68,7 @@ function renderCell(
     case "nat":
       return <span className="text-[#0f172a]">{s.nationality}</span>;
     case "status":
-      return (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
-          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${STATUS_DOT[s.status]}`} />
-          {s.status}
-        </span>
-      );
+      return <StatusBadge status={s.status} variant="light" />;
     case "vessel":
       return s.currentVessel
         ? <span className="text-[#0f172a]">{s.currentVessel}</span>
@@ -102,17 +80,14 @@ function renderCell(
   }
 }
 
-export default function SeafarersList() {
+export default function SeafarersList({ hiddenCols }: { hiddenCols: Set<string> }) {
   const router = useRouter();
 
   const [colWidths, setColWidths] = useState<Record<string, number>>(
     Object.fromEntries(COLUMNS.map((c) => [c.key, c.defaultWidth]))
   );
-  const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
-  const [sortKey, setSortKey]       = useState<string | null>(null);
-  const [sortDir, setSortDir]       = useState<"asc" | "desc">("asc");
-  const [colsOpen, setColsOpen]     = useState(false);
-  const colsRef = useRef<HTMLDivElement>(null);
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const dragging = useRef<{ colKey: string; startX: number; startW: number } | null>(null);
 
@@ -126,16 +101,6 @@ export default function SeafarersList() {
     if (va > vb) return sortDir === "asc" ?  1 : -1;
     return 0;
   });
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (colsRef.current && !colsRef.current.contains(e.target as Node)) {
-        setColsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
 
   const onResizeStart = useCallback(
     (e: React.MouseEvent, colKey: string) => {
@@ -170,15 +135,6 @@ export default function SeafarersList() {
     }
   }
 
-  function toggleCol(key: string) {
-    setHiddenCols((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
-
   function handleRowClick(id: string) {
     router.push(`/seafarers?ids=${id}`);
   }
@@ -186,100 +142,6 @@ export default function SeafarersList() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 24, boxSizing: "border-box" }}>
       <div style={{ maxWidth: 1200, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-
-        {/* Toolbar */}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-          <div ref={colsRef} style={{ position: "relative" }}>
-            <button
-              onClick={() => setColsOpen((v) => !v)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                fontSize: 13,
-                padding: "6px 12px",
-                borderRadius: 8,
-                border: "1px solid #e2e8f0",
-                background: colsOpen ? "#eff6ff" : "#ffffff",
-                color: "#475569",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                transition: "background 0.15s",
-              }}
-            >
-              <IconColumns size={15} />
-              Columns
-              {hiddenCols.size > 0 && (
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    background: "#2e7cc4",
-                    color: "#fff",
-                    borderRadius: 10,
-                    padding: "0 5px",
-                    lineHeight: "16px",
-                  }}
-                >
-                  {COLUMNS.length - hiddenCols.size}/{COLUMNS.length}
-                </span>
-              )}
-            </button>
-
-            {colsOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 4px)",
-                  right: 0,
-                  minWidth: 160,
-                  background: "#ffffff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: 8,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                  padding: "6px 0",
-                  zIndex: 20,
-                }}
-              >
-                {COLUMNS.map((col) => {
-                  const isHidden = hiddenCols.has(col.key);
-                  const locked = col.alwaysVisible;
-                  return (
-                    <label
-                      key={col.key}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        padding: "6px 14px",
-                        fontSize: 13,
-                        color: locked ? "#94a3b8" : "#0f172a",
-                        cursor: locked ? "default" : "pointer",
-                        userSelect: "none",
-                        transition: "background 0.1s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!locked) (e.currentTarget as HTMLElement).style.background = "#f8fafc";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLElement).style.background = "transparent";
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={!isHidden}
-                        disabled={locked}
-                        onChange={() => !locked && toggleCol(col.key)}
-                        style={{ accentColor: "#2e7cc4" }}
-                      />
-                      {col.label}
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Scrollable table wrapper — fills remaining height */}
         <div
@@ -376,7 +238,6 @@ export default function SeafarersList() {
 
             <tbody>
               {sortedSeafarers.map((s, i) => {
-                const statusStyle = STATUS_STYLES[s.status];
                 return (
                   <tr
                     key={s.id}
@@ -395,7 +256,7 @@ export default function SeafarersList() {
                           textOverflow: "ellipsis",
                         }}
                       >
-                        {renderCell(s, col.key, statusStyle)}
+                        {renderCell(s, col.key)}
                       </td>
                     ))}
                   </tr>
