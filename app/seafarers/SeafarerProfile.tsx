@@ -1,5 +1,6 @@
 "use client";
 
+import "./seafarers.css";
 import { useState, useRef, useEffect } from "react";
 import {
   Chart as ChartJS,
