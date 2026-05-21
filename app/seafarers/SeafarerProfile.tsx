@@ -79,6 +79,44 @@ function hexToRgba(hex: string, alpha: number) {
   return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${alpha})`;
 }
 
+function SeafarerAvatar({
+  seafarer,
+  size,
+  borderRadius,
+  style,
+  noPhotoStyle,
+}: {
+  seafarer: Seafarer;
+  size: number;
+  borderRadius: string | number;
+  style?: React.CSSProperties;
+  noPhotoStyle?: React.CSSProperties;
+}) {
+  const photo = seafarer.photo;
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius,
+        overflow: "hidden",
+        flexShrink: 0,
+        ...(photo
+          ? { background: `url(${photo}) center / cover no-repeat` }
+          : {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              ...noPhotoStyle,
+            }),
+        ...style,
+      }}
+    >
+      {!photo && getInitials(seafarer)}
+    </div>
+  );
+}
+
 export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Personal");
@@ -148,8 +186,6 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
     },
   };
 
-  const initials = getInitials(seafarer);
-
   return (
     <div className="p-6" style={{ flex: 1, overflowY: "auto" }}>
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>
@@ -157,9 +193,18 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
         {/* Header strip */}
         <div className="max-[500px]:flex-col max-[500px]:items-start" style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:16, padding:"20px 22px", background:"linear-gradient(135deg,#0f3460 0%,#1e5a96 100%)", borderRadius:12, marginBottom:14, color:"#fff", boxShadow:"0 2px 8px rgba(15,52,96,0.12)", position:"relative" }}>
           <div style={{ position:"relative" }}>
-            <div style={{ width:60, height:60, borderRadius:"50%", background:"rgba(255,255,255,0.15)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:19, fontWeight:500, border:"1px solid rgba(255,255,255,0.2)" }}>
-              {initials}
-            </div>
+            <SeafarerAvatar
+              seafarer={seafarer}
+              size={60}
+              borderRadius="50%"
+              style={{ border:"1px solid rgba(255,255,255,0.2)" }}
+              noPhotoStyle={{
+                background:"rgba(255,255,255,0.15)",
+                fontSize:19,
+                fontWeight:500,
+                color:"#fff",
+              }}
+            />
             {seafarer.status === "Onboard" && (
               <div style={{ position:"absolute", bottom:-1, right:-1, width:14, height:14, borderRadius:"50%", background:"#22c55e", border:"2px solid #144272" }} />
             )}
@@ -330,14 +375,22 @@ export default function SeafarerProfile({ seafarer }: { seafarer: Seafarer }) {
 }
 
 function PersonalTab({ seafarer, reminderOn, setReminderOn }: { seafarer: Seafarer; reminderOn: boolean; setReminderOn: (v: boolean) => void }) {
-  const initials = getInitials(seafarer);
   return (
     <>
       <div style={{ display:"flex", flexWrap:"wrap", gap:24, marginBottom:20 }}>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center" }}>
-          <div style={{ width:120, height:120, borderRadius:12, background:"linear-gradient(135deg,#144272 0%,#2e7cc4 100%)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:38, fontWeight:500, color:"#fff", marginBottom:12, boxShadow:"0 2px 8px rgba(15,52,96,0.12)" }}>
-            {initials}
-          </div>
+          <SeafarerAvatar
+            seafarer={seafarer}
+            size={120}
+            borderRadius={12}
+            style={{ marginBottom:12, boxShadow:"0 2px 8px rgba(15,52,96,0.12)" }}
+            noPhotoStyle={{
+              background:"linear-gradient(135deg,#144272 0%,#2e7cc4 100%)",
+              fontSize:38,
+              fontWeight:500,
+              color:"#fff",
+            }}
+          />
           <p style={{ fontSize:15, fontWeight:500, margin:0, color:"#0f172a" }}>{seafarer.firstName} {seafarer.lastName}</p>
           <p style={{ fontSize:12, color:"#475569", margin:"2px 0 10px" }}>ID {seafarer.id}</p>
           <StyledBtn icon={<IconEdit size={14}/>} label="Edit information" />
