@@ -49,8 +49,12 @@ export default function Sidebar() {
   }
 
   const sidebarWidth = isMobile
-    ? expanded ? "100vw" : 0
-    : expanded ? 220 : 64;
+    ? expanded
+      ? "100vw"
+      : 0
+    : expanded
+      ? 220
+      : 64;
 
   const sidebarVisible = !isMobile || expanded;
 
@@ -178,18 +182,19 @@ export default function Sidebar() {
                   transition: "background 0.15s, color 0.15s",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
-                  borderLeft: active ? "3px solid #2e7cc4" : "3px solid transparent",
                 }}
                 onMouseEnter={(e) => {
                   if (!active)
-                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+                    (e.currentTarget as HTMLElement).style.background =
+                      "rgba(255,255,255,0.06)";
                 }}
                 onMouseLeave={(e) => {
                   if (!active)
-                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                    (e.currentTarget as HTMLElement).style.background =
+                      "transparent";
                 }}
               >
-                <Icon size={isMobile ? 22 : 18} style={{ flexShrink: 0, marginLeft: active ? -3 : 0 }} />
+                <Icon size={isMobile ? 22 : 18} style={{ flexShrink: 0 }} />
                 <span
                   style={{
                     opacity: expanded ? 1 : 0,
@@ -253,17 +258,21 @@ export default function Sidebar() {
               overflow: "hidden",
             }}
             onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)")
+              ((e.currentTarget as HTMLElement).style.color =
+                "rgba(255,255,255,0.8)")
             }
             onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.4)")
+              ((e.currentTarget as HTMLElement).style.color =
+                "rgba(255,255,255,0.4)")
             }
             aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
           >
             {expanded ? (
               <>
                 <IconChevronLeft size={16} />
-                <span style={{ opacity: 1, transition: "opacity 0.15s" }}>Collapse</span>
+                <span style={{ opacity: 1, transition: "opacity 0.15s" }}>
+                  Collapse
+                </span>
               </>
             ) : (
               <IconChevronRight size={16} />
