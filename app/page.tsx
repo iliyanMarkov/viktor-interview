@@ -11,6 +11,7 @@ import {
   IconChevronDown,
 } from "@tabler/icons-react";
 import { ClockRow, DEFAULT_CLOCKS, EXTRA_CLOCK_OPTIONS } from "@/components/clocks";
+import InteractiveMap from "@/components/interactiveMap";
 
 /* ── KPI data ───────────────────────────────────────────── */
 const KPI = [
@@ -246,6 +247,8 @@ export default function Dashboard() {
           onAdd={addClock}
           canAdd={canAddClock}
         />
+
+        <InteractiveMap />
 
         {/* ── KPI cards ── */}
         <div

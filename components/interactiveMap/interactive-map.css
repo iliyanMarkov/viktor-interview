@@ -1,0 +1,114 @@
+.interactive-map {
+  position: relative;
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  margin: 0 auto 20px;
+}
+
+.interactive-map,
+.interactive-map div,
+.interactive-map img {
+  position: relative;
+  box-sizing: border-box;
+}
+
+.interactive-map__inner {
+  position: relative;
+  width: 100%;
+}
+
+.interactive-map__inner > img {
+  width: 100%;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border-radius: 8px;
+  opacity: 0.4;
+}
+
+.interactive-map .map-point {
+  cursor: pointer;
+  outline: none;
+  z-index: 0;
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-radius: 20px;
+  opacity: 0.85;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity 0.25s ease-in-out 0.25s,
+    width 0.25s ease-in-out 0.25s,
+    height 0.25s ease-in-out 0.25s,
+    z-index 0.25s ease-in-out 0.25s;
+  background: rgba(10, 37, 64, 0.88);
+  border: 5px solid #7cb9f7;
+  padding: 0;
+}
+
+.interactive-map .map-point .content {
+  opacity: 0;
+  transition: opacity 0.25s ease-in-out;
+  width: 100%;
+  height: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  overflow: overlay;
+  position: absolute;
+}
+
+.interactive-map .map-point .centered-y {
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 16px;
+  text-align: center;
+}
+
+.interactive-map .map-point .content h2 {
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.04em;
+}
+
+.interactive-map .map-point .content p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.interactive-map .map-point:active,
+.interactive-map .map-point:focus {
+  margin: 0;
+  padding: 0;
+  opacity: 1;
+  width: 300px;
+  height: 220px;
+  color: #fff;
+  z-index: 1;
+  transition:
+    opacity 0.25s ease-in-out,
+    width 0.25s ease-in-out,
+    height 0.25s ease-in-out;
+}
+
+.interactive-map .map-point:active .content,
+.interactive-map .map-point:focus .content {
+  opacity: 1;
+  transition:
+    opacity 0.25s ease-in-out 0.25s,
+    height 0.25s ease-in-out,
+    overflow 0.25s ease-in-out;
+  overflow: hidden;
+}
+
+.interactive-map .map-point .content a:hover,
+.interactive-map .map-point .content a:active {
+  color: #afe1fa;
+}
