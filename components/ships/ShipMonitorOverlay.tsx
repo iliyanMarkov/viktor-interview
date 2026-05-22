@@ -471,7 +471,7 @@ export default function ShipMonitorOverlay({
           borderRight: isMobile ? "none" : "1px solid rgba(15,52,96,0.10)",
           display: "flex",
           flexDirection: "column",
-          zIndex: isMobile ? 40 : 20,
+          zIndex: isMobile ? 40 : 25,
         }}
       >
         <div
@@ -703,7 +703,7 @@ export default function ShipMonitorOverlay({
           borderLeft: isMobile ? "none" : "1px solid rgba(15,52,96,0.10)",
           display: "flex",
           flexDirection: "column",
-          zIndex: isMobile ? 40 : 20,
+          zIndex: isMobile ? 40 : 25,
         }}
       >
         <div
