@@ -41,11 +41,11 @@ export const SHIPS: Ship[] = [
     name: "MV Aurora",
     type: "Container Vessel",
     flag: "Panama",
-    lat: 35.6,
-    lon: 139.6,
+    lat: 27.0,
+    lon: 129.0,
     status: "underway",
     speed: 18.4,
-    heading: 247,
+    heading: 225,
     destination: "Singapore",
     eta: "2026-05-22 14:30Z",
     cargo: "Electronics / 4,200 TEU",
@@ -62,8 +62,8 @@ export const SHIPS: Ship[] = [
     name: "BC Northwind",
     type: "Bulk Carrier",
     flag: "Norway",
-    lat: 60.4,
-    lon: 5.3,
+    lat: 58.5,
+    lon: 2.0,
     status: "anchored",
     speed: 0.2,
     heading: 0,
@@ -82,11 +82,11 @@ export const SHIPS: Ship[] = [
     name: "TK Seahorse",
     type: "Oil Tanker",
     flag: "Liberia",
-    lat: 25.3,
-    lon: 55.3,
+    lat: -4.75,
+    lon: 79.0,
     status: "underway",
     speed: 14.1,
-    heading: 102,
+    heading: 45,
     destination: "Mumbai",
     eta: "2026-05-21 22:15Z",
     cargo: "Crude Oil / 320,000 DWT",
@@ -104,11 +104,11 @@ export const SHIPS: Ship[] = [
     name: "CV Meridian",
     type: "Cruise Vessel",
     flag: "Bahamas",
-    lat: 25.7,
-    lon: -80.2,
+    lat: 22.24,
+    lon: -78.2,
     status: "in-port",
     speed: 0,
-    heading: 0,
+    heading: 220,
     destination: "Cozumel",
     eta: "2026-05-19 07:00Z",
     cargo: "3,840 passengers",
@@ -125,8 +125,8 @@ export const SHIPS: Ship[] = [
     name: "RV Polaris",
     type: "Research Vessel",
     flag: "Iceland",
-    lat: -54.8,
-    lon: -68.3,
+    lat: -58.5,
+    lon: -47.5,
     status: "underway",
     speed: 9.7,
     heading: 180,
@@ -145,8 +145,8 @@ export const SHIPS: Ship[] = [
     name: "FT Kestrel",
     type: "Fishing Trawler",
     flag: "Iceland",
-    lat: 64.1,
-    lon: -21.9,
+    lat: 64.0,
+    lon: -21.5,
     status: "underway",
     speed: 11.2,
     heading: 315,
@@ -164,11 +164,11 @@ export const SHIPS: Ship[] = [
     name: "CV Leviathan",
     type: "Container Vessel",
     flag: "Germany",
-    lat: -33.9,
-    lon: 18.4,
+    lat: -36.5,
+    lon: 0.5,
     status: "underway",
     speed: 21.3,
-    heading: 78,
+    heading: 350,
     destination: "Hamburg",
     eta: "2026-05-30 11:20Z",
     cargo: "Mixed / 18,000 TEU",
@@ -185,8 +185,8 @@ export const SHIPS: Ship[] = [
     name: "OS Trident",
     type: "Offshore Supply",
     flag: "UK",
-    lat: 56.5,
-    lon: 3.2,
+    lat: 57.5,
+    lon: -1.0,
     status: "anchored",
     speed: 0.5,
     heading: 0,
@@ -201,10 +201,45 @@ export const SHIPS: Ship[] = [
   },
 ];
 
-/** Equirectangular projection for flat world-map.png */
+/**
+ * Geographic extent of `public/world-map.png` (1065×524, equirectangular 2:1).
+ * Used to project ship lat/lon onto the flat map overlay.
+ */
+export const WORLD_MAP_GEO_BOUNDS = {
+  north: 90,
+  south: -90,
+  west: -180,
+  east: 180,
+} as const;
+
+/** Map lat/lon to percentage positions on world-map.png */
 export function latLonToPercent(lat: number, lon: number) {
+  const { north, south, west, east } = WORLD_MAP_GEO_BOUNDS;
+  const latSpan = north - south;
+  const lonSpan = east - west;
+
+  const top = ((north - lat) / latSpan) * 100;
+  const left = ((lon - west) / lonSpan) * 100;
+
   return {
-    top: `${((90 - lat) / 180) * 100}%`,
-    left: `${((lon + 180) / 360) * 100}%`,
+    top: `${Math.max(0, Math.min(100, top))}%`,
+    left: `${Math.max(0, Math.min(100, left))}%`,
+  };
+}
+
+/** Convert lat/lon to pixel coordinates for a given map render size. */
+export function latLonToPixel(
+  lat: number,
+  lon: number,
+  width: number,
+  height: number,
+) {
+  const { north, south, west, east } = WORLD_MAP_GEO_BOUNDS;
+  const latSpan = north - south;
+  const lonSpan = east - west;
+
+  return {
+    x: ((lon - west) / lonSpan) * width,
+    y: ((north - lat) / latSpan) * height,
   };
 }
