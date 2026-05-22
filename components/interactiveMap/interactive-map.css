@@ -4,6 +4,7 @@
   padding: 12px;
   box-sizing: border-box;
   margin: 0 auto 20px;
+
 }
 
 .interactive-map,
@@ -11,6 +12,13 @@
 .interactive-map img {
   position: relative;
   box-sizing: border-box;
+}
+
+.interactive-map__monitor {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
 }
 
 .interactive-map__inner {
@@ -30,7 +38,7 @@
 .interactive-map .map-point {
   cursor: pointer;
   outline: none;
-  z-index: 0;
+  z-index: 1;
   position: absolute;
   width: 15px;
   height: 15px;
@@ -38,77 +46,23 @@
   opacity: 0.85;
   transform: translate(-50%, -50%);
   transition:
-    opacity 0.25s ease-in-out 0.25s,
-    width 0.25s ease-in-out 0.25s,
-    height 0.25s ease-in-out 0.25s,
-    z-index 0.25s ease-in-out 0.25s;
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   background: rgba(10, 37, 64, 0.88);
   border: 5px solid #7cb9f7;
   padding: 0;
 }
 
-.interactive-map .map-point .content {
-  opacity: 0;
-  transition: opacity 0.25s ease-in-out;
-  width: 100%;
-  height: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  overflow: overlay;
-  position: absolute;
-}
-
-.interactive-map .map-point .centered-y {
-  position: absolute;
-  width: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 0 16px;
-  text-align: center;
-}
-
-.interactive-map .map-point .content h2 {
-  margin: 0 0 8px;
-  text-transform: uppercase;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  letter-spacing: 0.04em;
-}
-
-.interactive-map .map-point .content p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.interactive-map .map-point:active,
-.interactive-map .map-point:focus {
-  margin: 0;
-  padding: 0;
+.interactive-map .map-point--hover,
+.interactive-map .map-point:hover {
   opacity: 1;
-  width: 300px;
-  height: 220px;
-  color: #fff;
-  z-index: 1;
-  transition:
-    opacity 0.25s ease-in-out,
-    width 0.25s ease-in-out,
-    height 0.25s ease-in-out;
+  z-index: 2;
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 0 0 4px rgba(124, 185, 247, 0.35);
 }
 
-.interactive-map .map-point:active .content,
-.interactive-map .map-point:focus .content {
+.interactive-map .map-point:focus-visible {
   opacity: 1;
-  transition:
-    opacity 0.25s ease-in-out 0.25s,
-    height 0.25s ease-in-out,
-    overflow 0.25s ease-in-out;
-  overflow: hidden;
-}
-
-.interactive-map .map-point .content a:hover,
-.interactive-map .map-point .content a:active {
-  color: #afe1fa;
+  box-shadow: 0 0 0 3px rgba(46, 124, 196, 0.5);
 }
