@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type MouseEvent } from "react";
+import { useCallback, useRef, useState, type MouseEvent } from "react";
 import ShipMonitorOverlay from "@/components/ships/ShipMonitorOverlay";
 import { SHIPS, latLonToPercent, type Ship } from "@/lib/ships";
 import "./interactive-map.css";
@@ -9,9 +9,26 @@ const TOOLBAR_HEIGHT = 50;
 
 export default function InteractiveMap() {
   const monitorRef = useRef<HTMLDivElement>(null);
+  const mapInnerRef = useRef<HTMLDivElement>(null);
   const [selectedShip, setSelectedShip] = useState<Ship | null>(null);
   const [hoveredShip, setHoveredShip] = useState<string | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
+
+  const resolveShipHoverPosition = useCallback((shipId: string) => {
+    const ship = SHIPS.find((s) => s.id === shipId);
+    const monitor = monitorRef.current;
+    const mapInner = mapInnerRef.current;
+    if (!ship || !monitor || !mapInner) return null;
+
+    const monitorRect = monitor.getBoundingClientRect();
+    const mapRect = mapInner.getBoundingClientRect();
+    const { top, left } = latLonToPercent(ship.lat, ship.lon);
+
+    return {
+      x: mapRect.left - monitorRect.left + (parseFloat(left) / 100) * mapRect.width,
+      y: mapRect.top - monitorRect.top + (parseFloat(top) / 100) * mapRect.height,
+    };
+  }, []);
 
   const updateHoverPosition = (e: MouseEvent) => {
     const rect = monitorRef.current?.getBoundingClientRect();
@@ -43,10 +60,11 @@ export default function InteractiveMap() {
           hoverPosition={hoverPosition}
           setHoverPosition={setHoverPosition}
           toolbarHeight={TOOLBAR_HEIGHT}
+          resolveShipHoverPosition={resolveShipHoverPosition}
         />
 
         <div className="interactive-map__map">
-          <div className="interactive-map__inner">
+          <div ref={mapInnerRef} className="interactive-map__inner">
             <img src="/world-map.png" alt="World map showing fleet ship locations" />
             {SHIPS.map((ship) => {
               const position = latLonToPercent(ship.lat, ship.lon);

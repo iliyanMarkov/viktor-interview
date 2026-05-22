@@ -95,6 +95,8 @@ export interface ShipMonitorOverlayProps {
   setHoverPosition?: (position: { x: number; y: number } | null) => void;
   /** Renders a top toolbar strip (map layout) with toggle buttons inside it. */
   toolbarHeight?: number;
+  /** Map layout: place hover card at the ship dot for list item hovers. */
+  resolveShipHoverPosition?: (shipId: string) => { x: number; y: number } | null;
 }
 
 export default function ShipMonitorOverlay({
@@ -105,6 +107,7 @@ export default function ShipMonitorOverlay({
   hoverPosition = null,
   setHoverPosition,
   toolbarHeight,
+  resolveShipHoverPosition,
 }: ShipMonitorOverlayProps) {
   const [time, setTime] = useState<Date | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
@@ -642,9 +645,12 @@ export default function ShipMonitorOverlay({
                 onClick={() => setSelectedShip(ship)}
                 onMouseEnter={() => {
                   setHoveredShip(ship.id);
+                  setHoverPosition?.(resolveShipHoverPosition?.(ship.id) ?? null);
+                }}
+                onMouseLeave={() => {
+                  setHoveredShip(null);
                   setHoverPosition?.(null);
                 }}
-                onMouseLeave={() => setHoveredShip(null)}
                 style={{
                   padding: "10px 12px",
                   borderRadius: 8,
