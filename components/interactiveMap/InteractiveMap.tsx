@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import ShipMonitorOverlay from "@/components/ships/ShipMonitorOverlay";
+import ShipFleetTicker from "@/components/interactiveMap/ShipFleetTicker";
 import { SHIPS, latLonToPercent, type Ship } from "@/lib/ships";
 import "./interactive-map.css";
 
@@ -89,6 +90,16 @@ export default function InteractiveMap() {
     setHoverPosition(null);
   };
 
+  const handleTickerHighlight = (shipId: string) => {
+    setHoveredShip(shipId);
+    setHoverPosition(resolveShipHoverPosition(shipId));
+  };
+
+  const handleTickerClearHighlight = () => {
+    setHoveredShip(null);
+    setHoverPosition(null);
+  };
+
   return (
     <section className="interactive-map" aria-label="Fleet ship locations">
       <div ref={monitorRef} className="interactive-map__monitor">
@@ -127,6 +138,13 @@ export default function InteractiveMap() {
             })}
           </div>
         </div>
+
+        <ShipFleetTicker
+          hoveredShip={hoveredShip}
+          onHighlight={handleTickerHighlight}
+          onClearHighlight={handleTickerClearHighlight}
+          onSelect={setSelectedShip}
+        />
       </div>
     </section>
   );
