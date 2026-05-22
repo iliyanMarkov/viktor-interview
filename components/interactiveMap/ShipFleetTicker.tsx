@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { SHIPS, STATUS_THEME, type Ship } from "@/lib/ships";
 
 function TickerStatusPill({ status }: { status: Ship["status"] }) {
@@ -45,6 +46,41 @@ function ShipTickerCard({
   );
 }
 
+function TickerGroup({
+  groupRef,
+  ariaHidden,
+  hoveredShip,
+  onSelect,
+  onHighlight,
+  onClearHighlight,
+}: {
+  groupRef?: RefObject<HTMLDivElement | null>;
+  ariaHidden?: boolean;
+  hoveredShip: string | null;
+  onSelect: (ship: Ship) => void;
+  onHighlight: (shipId: string) => void;
+  onClearHighlight: () => void;
+}) {
+  return (
+    <div
+      ref={groupRef}
+      className="interactive-map__ticker-group"
+      aria-hidden={ariaHidden || undefined}
+    >
+      {SHIPS.map((ship) => (
+        <ShipTickerCard
+          key={ship.id}
+          ship={ship}
+          isHighlighted={hoveredShip === ship.id}
+          onSelect={onSelect}
+          onHighlight={onHighlight}
+          onClearHighlight={onClearHighlight}
+        />
+      ))}
+    </div>
+  );
+}
+
 export interface ShipFleetTickerProps {
   hoveredShip: string | null;
   onHighlight: (shipId: string) => void;
@@ -58,24 +94,52 @@ export default function ShipFleetTicker({
   onClearHighlight,
   onSelect,
 }: ShipFleetTickerProps) {
-  const items = [...SHIPS, ...SHIPS];
+  const groupRef = useRef<HTMLDivElement>(null);
+  const [loopWidth, setLoopWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+
+    const measure = () => setLoopWidth(group.offsetWidth);
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(group);
+    return () => observer.disconnect();
+  }, []);
+
+  const trackStyle: CSSProperties | undefined =
+    loopWidth > 0
+      ? {
+          ["--ticker-loop-width" as string]: `${loopWidth}px`,
+          animationDuration: `${Math.max(28, loopWidth / 45)}s`,
+        }
+      : undefined;
 
   return (
     <div className="interactive-map__ticker" aria-label="Fleet ship ticker">
       <div className="interactive-map__ticker-fade interactive-map__ticker-fade--left" aria-hidden />
       <div className="interactive-map__ticker-fade interactive-map__ticker-fade--right" aria-hidden />
       <div className="interactive-map__ticker-viewport">
-        <div className="interactive-map__ticker-track">
-          {items.map((ship, index) => (
-            <ShipTickerCard
-              key={`${ship.id}-${index}`}
-              ship={ship}
-              isHighlighted={hoveredShip === ship.id}
-              onSelect={onSelect}
-              onHighlight={onHighlight}
-              onClearHighlight={onClearHighlight}
-            />
-          ))}
+        <div
+          className={`interactive-map__ticker-track${loopWidth > 0 ? " interactive-map__ticker-track--ready" : ""}`}
+          style={trackStyle}
+        >
+          <TickerGroup
+            groupRef={groupRef}
+            hoveredShip={hoveredShip}
+            onSelect={onSelect}
+            onHighlight={onHighlight}
+            onClearHighlight={onClearHighlight}
+          />
+          <TickerGroup
+            ariaHidden
+            hoveredShip={hoveredShip}
+            onSelect={onSelect}
+            onHighlight={onHighlight}
+            onClearHighlight={onClearHighlight}
+          />
         </div>
       </div>
     </div>

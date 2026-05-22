@@ -103,9 +103,21 @@
 .interactive-map__ticker-track {
   display: flex;
   width: max-content;
+  will-change: transform;
+}
+
+.interactive-map__ticker-track--ready {
+  animation: interactive-map-ticker linear infinite;
+  animation-duration: 48s;
+}
+
+.interactive-map__ticker-group {
+  display: flex;
+  flex-shrink: 0;
+  align-items: stretch;
   gap: 10px;
-  padding: 12px 16px;
-  animation: interactive-map-ticker 48s linear infinite;
+  padding-top: 12px;
+ 
 }
 
 .interactive-map__ticker-viewport:hover .interactive-map__ticker-track {
@@ -114,10 +126,10 @@
 
 @keyframes interactive-map-ticker {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   to {
-    transform: translateX(-50%);
+    transform: translate3d(calc(-1 * var(--ticker-loop-width, 50%)), 0, 0);
   }
 }
 
@@ -207,8 +219,13 @@
     animation: none;
     flex-wrap: wrap;
     width: 100%;
-    padding: 12px;
     justify-content: center;
+  }
+
+  .interactive-map__ticker-group {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
   }
 
   .interactive-map__ticker-fade {
