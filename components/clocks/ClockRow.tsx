@@ -500,51 +500,101 @@ function ChronoClockCard({
   const blink = nums.s % 2 === 0;
 
   return (
-    <ClockCardShell city={city} onRemove={onRemove}>
-      <div
+    <div
+      style={{
+        background: "white",
+        border: "1px solid rgba(15,52,96,0.06)",
+        borderRadius: 8,
+        padding: "8px 10px 7px",
+        position: "relative",
+      }}
+    >
+      <span
         style={{
-          background: CLOCK.surface,
-          border: "1px solid rgba(15,52,96,0.06)",
-          borderRadius: 8,
-          padding: "8px 10px 7px",
+          fontSize: 11,
+          fontWeight: 600,
+          color: CLOCK.navy,
+          overflow: "visible",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          alignItems: "center",
+          position: "absolute",
+          top: 1,
+          left: "50%",
+          transform: "translateX(-50%) translateY(-100%)",
+          display: "flex",
+          gap: 2,
         }}
       >
-        <div
+        {city}
+        <button
+          onClick={onRemove}
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 2,
+            marginRight: -12,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: CLOCK.muted,
+            lineHeight: 1,
+            flexShrink: 0,
+            transition: "color 0.15s ease",
           }}
+          aria-label={`Remove ${city} clock`}
         >
-          {now ? (
-            <>
-              <SevenSeg digit={parts.hh[0]} />
-              <SevenSeg digit={parts.hh[1]} />
-              <SegColon on={blink} />
-              <SevenSeg digit={parts.mm[0]} />
-              <SevenSeg digit={parts.mm[1]} />
-              <SegColon on={blink} />
-              <SevenSeg digit={parts.ss[0]} w={10} h={20} />
-              <SevenSeg digit={parts.ss[1]} w={10} h={20} />
-            </>
-          ) : (
-            <div
-              style={{
-                color: CLOCK.navy,
-                fontSize: 14,
-                fontFamily: "monospace",
-                fontWeight: 700,
-                letterSpacing: "0.04em",
-              }}
-            >
-              ––:––:––
-            </div>
-          )}
-        </div>
+          <IconX size={12} />
+        </button>
+      </span>
+
+      <span
+        style={{
+          fontSize: 9,
+          color: CLOCK.muted,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          alignItems: "center",
+          position: "absolute",
+          bottom: 0,
+          left: "50%",
+          transform: "translateX(-50%) translateY(100%)",
+        }}
+      >
+        {now ? fmtDate(tz, now) : "–––"}
+      </span>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 2,
+        }}
+      >
+        {now ? (
+          <>
+            <SevenSeg digit={parts.hh[0]} />
+            <SevenSeg digit={parts.hh[1]} />
+            <SegColon on={blink} />
+            <SevenSeg digit={parts.mm[0]} />
+            <SevenSeg digit={parts.mm[1]} />
+            <SegColon on={blink} />
+            <SevenSeg digit={parts.ss[0]} w={10} h={20} />
+            <SevenSeg digit={parts.ss[1]} w={10} h={20} />
+          </>
+        ) : (
+          <div
+            style={{
+              color: CLOCK.navy,
+              fontSize: 14,
+              fontFamily: "monospace",
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+            }}
+          >
+            ––:––:––
+          </div>
+        )}
       </div>
-      <ClockDate tz={tz} now={now} />
-    </ClockCardShell>
+    </div>
   );
 }
 
@@ -790,7 +840,8 @@ export default function ClockRow({
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: 10,
+          columnGap: 10,
+          rowGap: 30,
           alignItems: "center",
         }}
       >
@@ -801,7 +852,7 @@ export default function ClockRow({
             disabled={!canAdd}
             aria-label="Add clock"
             style={{
-              margin: "32px 55px",
+              margin: "0 36px",
               width: 48,
               height: 48,
               flexShrink: 0,
