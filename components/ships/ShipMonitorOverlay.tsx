@@ -7,10 +7,6 @@ import {
   IconUsers,
   IconWind,
   IconX,
-  IconMapPin,
-  IconCalendar,
-  IconBriefcase,
-  IconGlobe,
   IconShip,
   IconSatellite,
   IconWifi,
@@ -18,6 +14,7 @@ import {
   IconLock,
 } from "@tabler/icons-react";
 import { SHIPS, STATUS_THEME, type Ship } from "@/lib/ships";
+import ShipDetailPanel, { StatusPill } from "@/components/ships/ShipDetailPanel";
 
 function StatCard({
   value,
@@ -52,36 +49,6 @@ function StatCard({
         {label}
       </div>
     </div>
-  );
-}
-
-function StatusPill({ status }: { status: Ship["status"] }) {
-  const t = STATUS_THEME[status];
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 5,
-        fontSize: 11,
-        fontWeight: 500,
-        padding: "2px 8px",
-        borderRadius: 20,
-        background: t.bg,
-        color: t.text,
-      }}
-    >
-      <span
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          background: t.dot,
-          display: "inline-block",
-        }}
-      />
-      {t.label}
-    </span>
   );
 }
 
@@ -219,6 +186,8 @@ export interface ShipMonitorOverlayProps {
   ) => { x: number; y: number } | null;
   /** Map layout: clamp hover card within the visible map area. */
   mapBounds?: HoverBounds | null;
+  /** When false, selected ship details are rendered elsewhere (e.g. dashboard panel). */
+  showSelectionModal?: boolean;
 }
 
 export default function ShipMonitorOverlay({
@@ -231,6 +200,7 @@ export default function ShipMonitorOverlay({
   toolbarHeight,
   resolveShipHoverPosition,
   mapBounds = null,
+  showSelectionModal = true,
 }: ShipMonitorOverlayProps) {
   const [time, setTime] = useState<Date | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
@@ -810,7 +780,7 @@ export default function ShipMonitorOverlay({
         </div>
       </aside>
 
-      {selectedShip && (
+      {showSelectionModal && selectedShip && (
         <div
           onClick={() => setSelectedShip(null)}
           style={{
@@ -842,378 +812,11 @@ export default function ShipMonitorOverlay({
               animation: "sm-slideup 0.25s ease",
             }}
           >
-            <div
-              style={{
-                padding: "20px 24px",
-                borderBottom: "1px solid rgba(15,52,96,0.08)",
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                flexShrink: 0,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "#64748b",
-                    marginBottom: 4,
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  {selectedShip.id}
-                </div>
-                <h2
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 700,
-                    color: "#0a2540",
-                    margin: 0,
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {selectedShip.name}
-                </h2>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    marginTop: 6,
-                  }}
-                >
-                  <span style={{ fontSize: 12, color: "#475569" }}>
-                    {selectedShip.type}
-                  </span>
-                  <span style={{ color: "#cbd5e1" }}>·</span>
-                  <span style={{ fontSize: 12, color: "#475569" }}>
-                    Flag: {selectedShip.flag}
-                  </span>
-                  <span style={{ color: "#cbd5e1" }}>·</span>
-                  <StatusPill status={selectedShip.status} />
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedShip(null)}
-                style={{
-                  background: "none",
-                  border: "1px solid rgba(15,52,96,0.12)",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  padding: 6,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#64748b",
-                  transition: "background 0.12s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#f1f5f9";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "none";
-                }}
-              >
-                <IconX size={16} />
-              </button>
-            </div>
-
-            <div
-              style={{ overflowY: "auto", flex: 1, padding: "20px 24px 24px" }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 10,
-                  marginBottom: 20,
-                  justifyContent: "space-between",
-                }}
-              >
-                {[
-                  {
-                    icon: IconNavigation,
-                    label: "Speed",
-                    value: `${selectedShip.speed} kts`,
-                  },
-                  {
-                    icon: IconWind,
-                    label: "Heading",
-                    value: `${String(selectedShip.heading).padStart(3, "0")}°`,
-                  },
-                  {
-                    icon: IconMapPin,
-                    label: "Destination",
-                    value: selectedShip.destination,
-                  },
-                  { icon: IconCalendar, label: "ETA", value: selectedShip.eta },
-                ].map(({ icon: Icon, label, value }) => (
-                  <div
-                    key={label}
-                    style={{
-                      background: "#f8fafc",
-                      border: "1px solid rgba(15,52,96,0.08)",
-                      borderRadius: 10,
-                      padding: "12px 14px",
-                      flex: 1,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        marginBottom: 6,
-                      }}
-                    >
-                      <Icon size={13} style={{ color: "#2e7cc4" }} />
-                      <span
-                        style={{
-                          fontSize: 10,
-                          color: "#64748b",
-                          fontWeight: 500,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.06em",
-                        }}
-                      >
-                        {label}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: "#0a2540",
-                      }}
-                    >
-                      {value}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 10,
-                  marginBottom: 24,
-                  justifyContent: "space-between",
-                }}
-              >
-                {[
-                  {
-                    icon: IconGlobe,
-                    label: "Coordinates",
-                    value: `${Math.abs(selectedShip.lat).toFixed(2)}° ${selectedShip.lat >= 0 ? "N" : "S"} · ${Math.abs(selectedShip.lon).toFixed(2)}° ${selectedShip.lon >= 0 ? "E" : "W"}`,
-                  },
-                  {
-                    icon: IconBriefcase,
-                    label: "Cargo Manifest",
-                    value: selectedShip.cargo,
-                  },
-                ].map(({ icon: Icon, label, value }) => (
-                  <div
-                    key={label}
-                    style={{
-                      background: "#f8fafc",
-                      border: "1px solid rgba(15,52,96,0.08)",
-                      borderRadius: 10,
-                      padding: "12px 14px",
-                      flex: 1,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        marginBottom: 6,
-                      }}
-                    >
-                      <Icon size={13} style={{ color: "#2e7cc4" }} />
-                      <span
-                        style={{
-                          fontSize: 10,
-                          color: "#64748b",
-                          fontWeight: 500,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.06em",
-                        }}
-                      >
-                        {label}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: "#0a2540",
-                      }}
-                    >
-                      {value}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div
-                style={{
-                  marginBottom: 14,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <IconUsers size={15} style={{ color: "#2e7cc4" }} />
-                <h3
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "#0a2540",
-                    margin: 0,
-                  }}
-                >
-                  Crew Roster
-                </h3>
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 500,
-                    background: "#eff6ff",
-                    color: "#1d4ed8",
-                    padding: "1px 7px",
-                    borderRadius: 20,
-                  }}
-                >
-                  {selectedShip.crew.length} personnel
-                </span>
-                <div
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background: "rgba(15,52,96,0.08)",
-                  }}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 10,
-                  justifyContent: "space-between",
-                }}
-              >
-                {selectedShip.crew.map((member, idx) => {
-                  const initials = member.name
-                    .split(" ")
-                    .filter(
-                      (p) =>
-                        !["Captain", "Dr."].includes(p) && !p.includes("."),
-                    )
-                    .slice(0, 2)
-                    .map((p) => p[0])
-                    .join("");
-                  return (
-                    <div
-                      key={idx}
-                      className="sm-crew-card"
-                      style={{
-                        background: "#fff",
-                        border: "1px solid rgba(15,52,96,0.08)",
-                        borderRadius: 10,
-                        padding: 14,
-                        transition: "background 0.12s",
-                        flex: 1,
-                      }}
-                    >
-                      <div
-                        style={{ display: "flex", gap: 10, marginBottom: 10 }}
-                      >
-                        <div
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: "50%",
-                            flexShrink: 0,
-                            background:
-                              "linear-gradient(135deg, #144272 0%, #2e7cc4 100%)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: "#fff",
-                          }}
-                        >
-                          {initials}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontSize: 13,
-                              fontWeight: 600,
-                              color: "#0a2540",
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            {member.name}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: 11,
-                              color: "#2e7cc4",
-                              marginTop: 2,
-                              fontWeight: 500,
-                            }}
-                          >
-                            {member.role}
-                          </div>
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 4,
-                        }}
-                      >
-                        {[
-                          ["Nationality", member.nationality],
-                          ["Age", String(member.age)],
-                          ["Experience", member.exp],
-                          ["Contact", member.contact],
-                        ].map(([k, v]) => (
-                          <div
-                            key={k}
-                            style={{ display: "flex", gap: 6, fontSize: 11 }}
-                          >
-                            <span
-                              style={{
-                                color: "#94a3b8",
-                                minWidth: 72,
-                                flexShrink: 0,
-                              }}
-                            >
-                              {k}
-                            </span>
-                            <span
-                              style={{
-                                color: "#334155",
-                                wordBreak: "break-all",
-                              }}
-                            >
-                              {v}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+            <div style={{ overflowY: "auto", flex: 1 }}>
+              <ShipDetailPanel
+                ship={selectedShip}
+                onClose={() => setSelectedShip(null)}
+              />
             </div>
           </div>
         </div>

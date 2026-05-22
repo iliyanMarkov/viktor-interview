@@ -15,10 +15,20 @@ type MapBounds = {
   height: number;
 };
 
-export default function InteractiveMap() {
+export interface InteractiveMapProps {
+  selectedShip?: Ship | null;
+  onSelectedShipChange?: (ship: Ship | null) => void;
+}
+
+export default function InteractiveMap({
+  selectedShip: selectedShipProp,
+  onSelectedShipChange,
+}: InteractiveMapProps = {}) {
   const monitorRef = useRef<HTMLDivElement>(null);
   const mapInnerRef = useRef<HTMLDivElement>(null);
-  const [selectedShip, setSelectedShip] = useState<Ship | null>(null);
+  const [internalSelectedShip, setInternalSelectedShip] = useState<Ship | null>(null);
+  const selectedShip = selectedShipProp ?? internalSelectedShip;
+  const setSelectedShip = onSelectedShipChange ?? setInternalSelectedShip;
   const [hoveredShip, setHoveredShip] = useState<string | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
@@ -113,6 +123,7 @@ export default function InteractiveMap() {
           toolbarHeight={TOOLBAR_HEIGHT}
           resolveShipHoverPosition={resolveShipHoverPosition}
           mapBounds={mapBounds}
+          showSelectionModal={!onSelectedShipChange}
         />
 
         <div className="interactive-map__map">
