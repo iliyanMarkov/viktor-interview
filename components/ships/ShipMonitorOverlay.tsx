@@ -93,6 +93,8 @@ export interface ShipMonitorOverlayProps {
   /** When set, the hover card follows the cursor (map dot hover). */
   hoverPosition?: { x: number; y: number } | null;
   setHoverPosition?: (position: { x: number; y: number } | null) => void;
+  /** Renders a top toolbar strip (map layout) with toggle buttons inside it. */
+  toolbarHeight?: number;
 }
 
 export default function ShipMonitorOverlay({
@@ -102,6 +104,7 @@ export default function ShipMonitorOverlay({
   setHoveredShip,
   hoverPosition = null,
   setHoverPosition,
+  toolbarHeight,
 }: ShipMonitorOverlayProps) {
   const [time, setTime] = useState<Date | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
@@ -146,6 +149,97 @@ export default function ShipMonitorOverlay({
     ? `${time.toISOString().split("T")[1].split(".")[0]} UTC`
     : null;
 
+  const closePanels = () => {
+    setLeftOpen(false);
+    setRightOpen(false);
+  };
+
+  const panelTop = isMobile ? 56 : (toolbarHeight ?? 0);
+
+  const fleetOverviewButton = (
+    <button
+      type="button"
+      className="sm-toggle-btn"
+      onClick={() => {
+        if (leftOpen) {
+          setLeftOpen(false);
+        } else {
+          setLeftOpen(true);
+          setRightOpen(false);
+        }
+      }}
+      style={{
+        ...(toolbarHeight
+          ? {}
+          : {
+              position: "absolute",
+              top: 16,
+              left: !isMobile && leftOpen ? 272 : 16,
+              transition: "left 0.25s ease",
+            }),
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        background: leftOpen ? "#0a2540" : "rgba(255,255,255,0.92)",
+        color: leftOpen ? "#fff" : "#0a2540",
+        border: "1px solid rgba(15,52,96,0.12)",
+        borderRadius: 8,
+        padding: "7px 12px",
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: "pointer",
+        boxShadow: "0 1px 4px rgba(15,52,96,0.10)",
+        backdropFilter: "blur(6px)",
+        zIndex: 20,
+      }}
+    >
+      <IconAnchor size={13} />
+      Fleet Overview
+    </button>
+  );
+
+  const activeVesselsButton = (
+    <button
+      type="button"
+      className="sm-toggle-btn"
+      onClick={() => {
+        if (rightOpen) {
+          setRightOpen(false);
+        } else {
+          setRightOpen(true);
+          setLeftOpen(false);
+        }
+      }}
+      style={{
+        ...(toolbarHeight
+          ? {}
+          : {
+              position: "absolute",
+              top: 16,
+              right: !isMobile && rightOpen ? 312 : 16,
+              transition: "right 0.25s ease",
+            }),
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        background: rightOpen ? "#0a2540" : "rgba(255,255,255,0.92)",
+        color: rightOpen ? "#fff" : "#0a2540",
+        border: "1px solid rgba(15,52,96,0.12)",
+        borderRadius: 8,
+        padding: "7px 12px",
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: "pointer",
+        boxShadow: "0 1px 4px rgba(15,52,96,0.10)",
+        backdropFilter: "blur(6px)",
+        zIndex: 20,
+      }}
+    >
+      <IconShip size={13} />
+      Active Vessels
+    </button>
+  );
+
   return (
     <>
       <style>{`
@@ -156,6 +250,13 @@ export default function ShipMonitorOverlay({
         @keyframes sm-fadein { from{opacity:0} to{opacity:1} }
         @keyframes sm-slideup { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
       `}</style>
+
+      {toolbarHeight ? (
+        <div className="interactive-map__toolbar">
+          {fleetOverviewButton}
+          {activeVesselsButton}
+        </div>
+      ) : null}
 
       {hoveredShipData && (
         <div
@@ -220,103 +321,30 @@ export default function ShipMonitorOverlay({
         </div>
       )}
 
-      {isMobile && leftOpen && (
+      {(leftOpen || rightOpen) && (
         <div
-          onClick={() => setLeftOpen(false)}
+          onClick={closePanels}
+          aria-hidden
           style={{
-            position: "fixed",
-            top: 56,
+            position: isMobile ? "fixed" : "absolute",
+            top: panelTop,
             left: 0,
             right: 0,
             bottom: 0,
-            background: "rgba(0,0,0,0.45)",
-            zIndex: 39,
-          }}
-        />
-      )}
-      {isMobile && rightOpen && (
-        <div
-          onClick={() => setRightOpen(false)}
-          style={{
-            position: "fixed",
-            top: 56,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,0.45)",
-            zIndex: 39,
+            background: isMobile ? "rgba(0,0,0,0.45)" : "transparent",
+            zIndex: 19,
           }}
         />
       )}
 
-      <button
-        type="button"
-        className="sm-toggle-btn"
-        onClick={() => {
-          setLeftOpen((v) => !v);
-          setRightOpen(false);
-        }}
-        style={{
-          position: "absolute",
-          top: 16,
-          left: !isMobile && leftOpen ? 272 : 16,
-          transition: "left 0.25s ease",
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          background: leftOpen ? "#0a2540" : "rgba(255,255,255,0.92)",
-          color: leftOpen ? "#fff" : "#0a2540",
-          border: "1px solid rgba(15,52,96,0.12)",
-          borderRadius: 8,
-          padding: "7px 12px",
-          fontSize: 12,
-          fontWeight: 600,
-          cursor: "pointer",
-          boxShadow: "0 1px 4px rgba(15,52,96,0.10)",
-          backdropFilter: "blur(6px)",
-          zIndex: 20,
-        }}
-      >
-        <IconAnchor size={13} />
-        Fleet Overview
-      </button>
+      {!toolbarHeight ? fleetOverviewButton : null}
 
-      <button
-        type="button"
-        className="sm-toggle-btn"
-        onClick={() => {
-          setRightOpen((v) => !v);
-          setLeftOpen(false);
-        }}
-        style={{
-          position: "absolute",
-          top: 16,
-          right: !isMobile && rightOpen ? 312 : 16,
-          transition: "right 0.25s ease",
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          background: rightOpen ? "#0a2540" : "rgba(255,255,255,0.92)",
-          color: rightOpen ? "#fff" : "#0a2540",
-          border: "1px solid rgba(15,52,96,0.12)",
-          borderRadius: 8,
-          padding: "7px 12px",
-          fontSize: 12,
-          fontWeight: 600,
-          cursor: "pointer",
-          boxShadow: "0 1px 4px rgba(15,52,96,0.10)",
-          backdropFilter: "blur(6px)",
-          zIndex: 20,
-        }}
-      >
-        <IconShip size={13} />
-        Active Vessels
-      </button>
+      {!toolbarHeight ? activeVesselsButton : null}
 
       <aside
         style={{
           position: isMobile ? "fixed" : "absolute",
-          top: isMobile ? 56 : 0,
+          top: panelTop,
           left: 0,
           bottom: 0,
           width: isMobile ? "100vw" : 264,
@@ -548,7 +576,7 @@ export default function ShipMonitorOverlay({
       <aside
         style={{
           position: isMobile ? "fixed" : "absolute",
-          top: isMobile ? 56 : 0,
+          top: panelTop,
           right: 0,
           bottom: 0,
           width: isMobile ? "100vw" : 296,

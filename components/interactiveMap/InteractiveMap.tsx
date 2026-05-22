@@ -5,6 +5,8 @@ import ShipMonitorOverlay from "@/components/ships/ShipMonitorOverlay";
 import { SHIPS, latLonToPercent, type Ship } from "@/lib/ships";
 import "./interactive-map.css";
 
+const TOOLBAR_HEIGHT = 50;
+
 export default function InteractiveMap() {
   const monitorRef = useRef<HTMLDivElement>(null);
   const [selectedShip, setSelectedShip] = useState<Ship | null>(null);
@@ -33,28 +35,6 @@ export default function InteractiveMap() {
   return (
     <section className="interactive-map" aria-label="Fleet ship locations">
       <div ref={monitorRef} className="interactive-map__monitor">
-        <div className="interactive-map__inner">
-          <img src="/world-map.png" alt="World map showing fleet ship locations" />
-          {SHIPS.map((ship) => {
-            const position = latLonToPercent(ship.lat, ship.lon);
-            const isHovered = hoveredShip === ship.id;
-
-            return (
-              <button
-                key={ship.id}
-                type="button"
-                className={`map-point${isHovered ? " map-point--hover" : ""}`}
-                style={{ top: position.top, left: position.left }}
-                aria-label={`${ship.name} — ${ship.type}`}
-                onClick={() => setSelectedShip(ship)}
-                onMouseEnter={(e) => handleDotEnter(ship.id, e)}
-                onMouseMove={updateHoverPosition}
-                onMouseLeave={handleDotLeave}
-              />
-            );
-          })}
-        </div>
-
         <ShipMonitorOverlay
           selectedShip={selectedShip}
           setSelectedShip={setSelectedShip}
@@ -62,7 +42,32 @@ export default function InteractiveMap() {
           setHoveredShip={setHoveredShip}
           hoverPosition={hoverPosition}
           setHoverPosition={setHoverPosition}
+          toolbarHeight={TOOLBAR_HEIGHT}
         />
+
+        <div className="interactive-map__map">
+          <div className="interactive-map__inner">
+            <img src="/world-map.png" alt="World map showing fleet ship locations" />
+            {SHIPS.map((ship) => {
+              const position = latLonToPercent(ship.lat, ship.lon);
+              const isHovered = hoveredShip === ship.id;
+
+              return (
+                <button
+                  key={ship.id}
+                  type="button"
+                  className={`map-point${isHovered ? " map-point--hover" : ""}`}
+                  style={{ top: position.top, left: position.left }}
+                  aria-label={`${ship.name} — ${ship.type}`}
+                  onClick={() => setSelectedShip(ship)}
+                  onMouseEnter={(e) => handleDotEnter(ship.id, e)}
+                  onMouseMove={updateHoverPosition}
+                  onMouseLeave={handleDotLeave}
+                />
+              );
+            })}
+          </div>
+        </div>
       </div>
     </section>
   );
