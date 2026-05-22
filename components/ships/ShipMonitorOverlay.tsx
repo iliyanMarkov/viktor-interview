@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   IconAnchor,
   IconNavigation,
@@ -85,6 +85,124 @@ function StatusPill({ status }: { status: Ship["status"] }) {
   );
 }
 
+type HoverBounds = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+};
+
+function computeClampedTooltipPosition(
+  anchor: { x: number; y: number },
+  card: { width: number; height: number },
+  bounds: HoverBounds,
+  offset = 14,
+  padding = 8,
+) {
+  const boundRight = bounds.left + bounds.width;
+  const boundBottom = bounds.top + bounds.height;
+
+  let left = anchor.x + offset;
+  let top = anchor.y + offset;
+
+  if (left + card.width + padding > boundRight) {
+    left = anchor.x - card.width - offset;
+  }
+  if (top + card.height + padding > boundBottom) {
+    top = anchor.y - card.height - offset;
+  }
+
+  left = Math.max(
+    bounds.left + padding,
+    Math.min(left, boundRight - card.width - padding),
+  );
+  top = Math.max(
+    bounds.top + padding,
+    Math.min(top, boundBottom - card.height - padding),
+  );
+
+  return { left, top };
+}
+
+function ShipHoverTooltip({
+  ship,
+  anchor,
+  bounds,
+}: {
+  ship: Ship;
+  anchor: { x: number; y: number };
+  bounds: HoverBounds;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState(() => ({
+    left: anchor.x + 14,
+    top: anchor.y + 14,
+  }));
+
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+
+    const { width, height } = card.getBoundingClientRect();
+    setPosition(
+      computeClampedTooltipPosition(anchor, { width, height }, bounds),
+    );
+  }, [
+    anchor.x,
+    anchor.y,
+    bounds.top,
+    bounds.left,
+    bounds.width,
+    bounds.height,
+    ship.id,
+  ]);
+
+  return (
+    <div
+      ref={cardRef}
+      style={{
+        position: "absolute",
+        top: position.top,
+        left: position.left,
+        background: "#fff",
+        border: "1px solid rgba(15,52,96,0.12)",
+        borderRadius: 10,
+        boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+        padding: "10px 14px",
+        pointerEvents: "none",
+        animation: "sm-fadein 0.15s ease",
+        minWidth: 160,
+        zIndex: 25,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 10,
+          color: "#64748b",
+          marginBottom: 2,
+          letterSpacing: "0.04em",
+        }}
+      >
+        {ship.id}
+      </div>
+      <div
+        style={{
+          fontSize: 14,
+          fontWeight: 600,
+          color: "#0a2540",
+          marginBottom: 4,
+        }}
+      >
+        {ship.name}
+      </div>
+      <div style={{ fontSize: 11, color: "#475569", marginBottom: 8 }}>
+        {ship.type}
+      </div>
+      <StatusPill status={ship.status} />
+    </div>
+  );
+}
+
 export interface ShipMonitorOverlayProps {
   selectedShip: Ship | null;
   setSelectedShip: (ship: Ship | null) => void;
@@ -96,7 +214,11 @@ export interface ShipMonitorOverlayProps {
   /** Renders a top toolbar strip (map layout) with toggle buttons inside it. */
   toolbarHeight?: number;
   /** Map layout: place hover card at the ship dot for list item hovers. */
-  resolveShipHoverPosition?: (shipId: string) => { x: number; y: number } | null;
+  resolveShipHoverPosition?: (
+    shipId: string,
+  ) => { x: number; y: number } | null;
+  /** Map layout: clamp hover card within the visible map area. */
+  mapBounds?: HoverBounds | null;
 }
 
 export default function ShipMonitorOverlay({
@@ -108,6 +230,7 @@ export default function ShipMonitorOverlay({
   setHoverPosition,
   toolbarHeight,
   resolveShipHoverPosition,
+  mapBounds = null,
 }: ShipMonitorOverlayProps) {
   const [time, setTime] = useState<Date | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
@@ -261,41 +384,32 @@ export default function ShipMonitorOverlay({
         </div>
       ) : null}
 
-      {hoveredShipData && (
+      {hoveredShipData && hoverPosition && mapBounds ? (
+        <ShipHoverTooltip
+          ship={hoveredShipData}
+          anchor={hoverPosition}
+          bounds={mapBounds}
+        />
+      ) : null}
+
+      {hoveredShipData && (!hoverPosition || !mapBounds) ? (
         <div
-          style={
-            hoverPosition
-              ? {
-                  position: "absolute",
-                  top: hoverPosition.y + 14,
-                  left: hoverPosition.x + 14,
-                  background: "#fff",
-                  border: "1px solid rgba(15,52,96,0.12)",
-                  borderRadius: 10,
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-                  padding: "10px 14px",
-                  pointerEvents: "none",
-                  animation: "sm-fadein 0.15s ease",
-                  minWidth: 160,
-                  zIndex: 15,
-                }
-              : {
-                  position: "absolute",
-                  top: "50%",
-                  left: leftOpen ? 280 : 16,
-                  transform: "translateY(-50%)",
-                  background: "#fff",
-                  border: "1px solid rgba(15,52,96,0.12)",
-                  borderRadius: 10,
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-                  padding: "10px 14px",
-                  pointerEvents: "none",
-                  animation: "sm-fadein 0.15s ease",
-                  minWidth: 160,
-                  transition: "left 0.25s ease",
-                  zIndex: 15,
-                }
-          }
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: leftOpen ? 280 : 16,
+            transform: "translateY(-50%)",
+            background: "#fff",
+            border: "1px solid rgba(15,52,96,0.12)",
+            borderRadius: 10,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+            padding: "10px 14px",
+            pointerEvents: "none",
+            animation: "sm-fadein 0.15s ease",
+            minWidth: 160,
+            transition: "left 0.25s ease",
+            zIndex: 15,
+          }}
         >
           <div
             style={{
@@ -322,7 +436,7 @@ export default function ShipMonitorOverlay({
           </div>
           <StatusPill status={hoveredShipData.status} />
         </div>
-      )}
+      ) : null}
 
       {(leftOpen || rightOpen) && (
         <div
@@ -645,7 +759,9 @@ export default function ShipMonitorOverlay({
                 onClick={() => setSelectedShip(ship)}
                 onMouseEnter={() => {
                   setHoveredShip(ship.id);
-                  setHoverPosition?.(resolveShipHoverPosition?.(ship.id) ?? null);
+                  setHoverPosition?.(
+                    resolveShipHoverPosition?.(ship.id) ?? null,
+                  );
                 }}
                 onMouseLeave={() => {
                   setHoveredShip(null);

@@ -1,11 +1,18 @@
 "use client";
 
-import { useCallback, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import ShipMonitorOverlay from "@/components/ships/ShipMonitorOverlay";
 import { SHIPS, latLonToPercent, type Ship } from "@/lib/ships";
 import "./interactive-map.css";
 
 const TOOLBAR_HEIGHT = 50;
+
+type MapBounds = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+};
 
 export default function InteractiveMap() {
   const monitorRef = useRef<HTMLDivElement>(null);
@@ -13,6 +20,39 @@ export default function InteractiveMap() {
   const [selectedShip, setSelectedShip] = useState<Ship | null>(null);
   const [hoveredShip, setHoveredShip] = useState<string | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+
+  const updateMapBounds = useCallback(() => {
+    const monitor = monitorRef.current;
+    const mapInner = mapInnerRef.current;
+    if (!monitor || !mapInner) return;
+
+    const monitorRect = monitor.getBoundingClientRect();
+    const mapRect = mapInner.getBoundingClientRect();
+
+    setMapBounds({
+      top: mapRect.top - monitorRect.top,
+      left: mapRect.left - monitorRect.left,
+      width: mapRect.width,
+      height: mapRect.height,
+    });
+  }, []);
+
+  useEffect(() => {
+    updateMapBounds();
+    window.addEventListener("resize", updateMapBounds);
+
+    const monitor = monitorRef.current;
+    const mapInner = mapInnerRef.current;
+    const observer = new ResizeObserver(updateMapBounds);
+    if (monitor) observer.observe(monitor);
+    if (mapInner) observer.observe(mapInner);
+
+    return () => {
+      window.removeEventListener("resize", updateMapBounds);
+      observer.disconnect();
+    };
+  }, [updateMapBounds]);
 
   const resolveShipHoverPosition = useCallback((shipId: string) => {
     const ship = SHIPS.find((s) => s.id === shipId);
@@ -61,6 +101,7 @@ export default function InteractiveMap() {
           setHoverPosition={setHoverPosition}
           toolbarHeight={TOOLBAR_HEIGHT}
           resolveShipHoverPosition={resolveShipHoverPosition}
+          mapBounds={mapBounds}
         />
 
         <div className="interactive-map__map">
