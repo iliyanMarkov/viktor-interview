@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ClockRow, DEFAULT_CLOCKS, EXTRA_CLOCK_OPTIONS } from "@/components/clocks";
+import {
+  ClockRow,
+  DEFAULT_CLOCKS,
+  EXTRA_CLOCK_OPTIONS,
+} from "@/components/clocks";
 import InteractiveMap from "@/components/interactiveMap";
 import ShipDetailPanel from "@/components/ships/ShipDetailPanel";
 import type { Ship } from "@/lib/ships";
@@ -77,14 +81,14 @@ export default function Dashboard() {
           </h1>
         </div>
 
-        {/* ── World clocks: three rows ── */}
+        {/* ── World clocks ── */}
         <ClockRow
-          variant="chrono"
           clocks={clocks}
           now={now}
           onRemove={removeClock}
           onAdd={addClock}
           canAdd={canAddClock}
+          size={1.1}
         />
 
         <InteractiveMap
